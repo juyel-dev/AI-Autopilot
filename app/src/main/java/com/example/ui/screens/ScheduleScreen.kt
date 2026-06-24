@@ -24,6 +24,7 @@ import com.example.data.ContentBrief
 import com.example.ui.components.AetherGlassCard
 import com.example.ui.components.LiquidBackground
 import com.example.ui.viewmodel.AetherViewModel
+import com.example.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -63,12 +64,12 @@ fun ScheduleScreen(viewModel: AetherViewModel) {
                         text = "Creative Schedule",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
                         text = "Rolling 7-Day Planning Deck",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.5f)
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                     )
                 }
                 
@@ -80,7 +81,10 @@ fun ScheduleScreen(viewModel: AetherViewModel) {
                             newHashtags = ""
                             showAddDialog = true
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
                         shape = RoundedCornerShape(10.dp)
                     ) {
                         Icon(Icons.Default.Add, contentDescription = "Add Brief")
@@ -102,14 +106,14 @@ fun ScheduleScreen(viewModel: AetherViewModel) {
                             text = "Supabase Connection Required",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onBackground,
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "Please run the setup wizard and configure your Supabase URL to activate the scheduling pipeline.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.6f),
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -126,7 +130,7 @@ fun ScheduleScreen(viewModel: AetherViewModel) {
                         Text(
                             text = "No planned schedule detected. Tap the button above to insert a new calendar brief, or run Setup again to seed automated templates.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.6f),
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -372,11 +376,12 @@ fun ScheduleBriefRow(
 ) {
     val formatter = SimpleDateFormat("EEE hh:mm a (MMM dd)", Locale.getDefault())
     val formattedTime = formatter.format(Date(brief.slotTime))
+    val isDark = isSystemInDarkTheme()
 
     val statusColor = when (brief.status) {
-        "published" -> Color(0xFF10B981)
-        "approved" -> Color(0xFF3B82F6)
-        "skipped" -> Color(0xFF6B7280)
+        "published" -> Emerald500
+        "approved" -> MaterialTheme.colorScheme.primary
+        "skipped" -> MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
         else -> Color(0xFFF59E0B)
     }
 
@@ -389,7 +394,7 @@ fun ScheduleBriefRow(
             Text(
                 text = formattedTime,
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.5f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                 fontWeight = FontWeight.Bold
             )
             
@@ -422,7 +427,7 @@ fun ScheduleBriefRow(
                 modifier = Modifier
                     .size(80.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFF0F172A))
+                    .background(if (isDark) Slate900 else Slate100)
             ) {
                 if (brief.imageUrl.isNotEmpty()) {
                     AsyncImage(
@@ -433,7 +438,7 @@ fun ScheduleBriefRow(
                     )
                 } else {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = Color(0x3DFFFFFF), strokeWidth = 2.dp)
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), strokeWidth = 2.dp)
                     }
                 }
             }
@@ -445,13 +450,13 @@ fun ScheduleBriefRow(
                 Text(
                     text = brief.topic,
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = brief.caption,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.6f),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                     maxLines = 2,
                     lineHeight = 15.sp,
                     modifier = Modifier.padding(vertical = 4.dp)
@@ -461,7 +466,7 @@ fun ScheduleBriefRow(
                     Text(
                         text = brief.hashtags.split(",").joinToString(" ") { "#$it" },
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF3B82F6),
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -481,9 +486,14 @@ fun ScheduleBriefRow(
                     modifier = Modifier
                         .size(36.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0x12FFFFFF))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                 ) {
-                    Icon(Icons.Default.Edit, contentDescription = "Edit Block", tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(16.dp))
+                    Icon(
+                        Icons.Default.Edit, 
+                        contentDescription = "Edit Block", 
+                        tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f), 
+                        modifier = Modifier.size(16.dp)
+                    )
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -492,7 +502,10 @@ fun ScheduleBriefRow(
                     "approved" -> {
                         Button(
                             onClick = onPublish,
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC4899)),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier.height(36.dp),
                             contentPadding = PaddingValues(horizontal = 12.dp)
@@ -503,7 +516,10 @@ fun ScheduleBriefRow(
                     "skipped" -> {
                         Button(
                             onClick = onApprove,
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Emerald500,
+                                contentColor = Color.White
+                            ),
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier.height(36.dp),
                             contentPadding = PaddingValues(horizontal = 12.dp)
@@ -525,7 +541,10 @@ fun ScheduleBriefRow(
 
                         Button(
                             onClick = onApprove,
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Emerald500,
+                                contentColor = Color.White
+                            ),
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier.height(36.dp),
                             contentPadding = PaddingValues(horizontal = 12.dp)
@@ -539,7 +558,7 @@ fun ScheduleBriefRow(
                 Text(
                     text = "Published to Facebook",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF10B981),
+                    color = Emerald500,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = 8.dp)
                 )

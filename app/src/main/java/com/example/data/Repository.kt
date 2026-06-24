@@ -70,6 +70,19 @@ class AetherRepository(
         )
     }
 
+    suspend fun getSettingsRaw(): AppSettings? {
+        val settings = appSettingsDao.getSettingsDirect() ?: return null
+        return settings.copy(
+            supabaseUrl = secureStorage.getString("supabaseUrl", ""),
+            anonKey = secureStorage.getString("anonKey", ""),
+            serviceRoleKey = secureStorage.getString("serviceRoleKey", ""),
+            patKey = secureStorage.getString("patKey", ""),
+            facebookToken = secureStorage.getString("facebookToken", ""),
+            aiApiKey = secureStorage.getString("aiApiKey", ""),
+            imageApiKey = secureStorage.getString("imageApiKey", "")
+        )
+    }
+
     suspend fun saveSettings(settings: AppSettings) {
         if (!settings.supabaseUrl.contains("****")) secureStorage.saveString("supabaseUrl", settings.supabaseUrl)
         if (!settings.anonKey.contains("****")) secureStorage.saveString("anonKey", settings.anonKey)

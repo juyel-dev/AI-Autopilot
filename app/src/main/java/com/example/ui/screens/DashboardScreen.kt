@@ -32,6 +32,7 @@ import com.example.ui.components.LiquidBackground
 import com.example.ui.components.ObsidianBg
 import com.example.ui.viewmodel.AetherViewModel
 import com.example.ui.viewmodel.Screen
+import com.example.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -74,7 +75,7 @@ fun DashboardScreen(viewModel: AetherViewModel) {
                         text = settings?.projectName?.ifEmpty { "Aether Engine" } ?: "Aether Engine",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         val isConnected = !settings?.supabaseUrl.isNullOrEmpty()
@@ -82,25 +83,47 @@ fun DashboardScreen(viewModel: AetherViewModel) {
                             modifier = Modifier
                                 .size(8.dp)
                                 .clip(CircleShape)
-                                .background(if (isConnected) Color(0xFF10B981) else Color(0xFFF59E0B))
+                                .background(if (isConnected) Emerald500 else Color(0xFFF59E0B))
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = if (isConnected) "Backplane active" else "Setup required",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.5f)
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                         )
                     }
                 }
                 
-                IconButton(
-                    onClick = { viewModel.navigateTo(Screen.SETTINGS) },
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(Color(0x0DFFFFFF))
-                        .border(1.dp, Color(0x1BFFFFFF), CircleShape)
-                ) {
-                    Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    val isSyncing by viewModel.isSyncing.collectAsState()
+                    val isConnected = !settings?.supabaseUrl.isNullOrEmpty()
+                    
+                    if (isConnected) {
+                        IconButton(
+                            onClick = { viewModel.triggerSupabaseSync() },
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f), CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Sync with Supabase",
+                                tint = if (isSyncing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+
+                    IconButton(
+                        onClick = { viewModel.navigateTo(Screen.SETTINGS) },
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f), CircleShape)
+                    ) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onBackground)
+                    }
                 }
             }
 
@@ -120,19 +143,19 @@ fun DashboardScreen(viewModel: AetherViewModel) {
                             text = "Data Connection Required",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = MaterialTheme.colorScheme.onBackground
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "Aether requires a valid Supabase connection to store and retrieve production data. Run the setup wizard to connect your backend.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.7f),
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(
                             onClick = { viewModel.navigateTo(Screen.SETUP_WIZARD) },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
                             Text("Run Setup Wizard")
                         }
@@ -144,7 +167,7 @@ fun DashboardScreen(viewModel: AetherViewModel) {
             Text(
                 text = "POSTING CONTROL PIPELINE",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.5f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -162,18 +185,18 @@ fun DashboardScreen(viewModel: AetherViewModel) {
                     listOf("manual", "hybrid_auto").forEach { mode ->
                         val isSelected = settings?.postingMode == mode
                         val (label, bg, color) = when (mode) {
-                            "manual" -> Triple("Manual", Color(0xFFF59E0B), Color.Black)
-                            else -> Triple("Hybrid Auto", Color(0xFF3B82F6), Color.White)
+                            "manual" -> Triple("Manual", MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary)
+                            else -> Triple("Hybrid Auto", MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary)
                         }
 
                         Box(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSelected) bg.copy(alpha = 0.2f) else Color.Transparent)
+                                .background(if (isSelected) bg.copy(alpha = 0.15f) else Color.Transparent)
                                 .border(
                                     width = 1.dp,
-                                    color = if (isSelected) bg else Color(0x1AFFFFFF),
+                                    color = if (isSelected) bg else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f),
                                     shape = RoundedCornerShape(8.dp)
                                 )
                                 .clickable {
@@ -193,7 +216,7 @@ fun DashboardScreen(viewModel: AetherViewModel) {
                                 text = label,
                                 style = MaterialTheme.typography.labelLarge,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isSelected) Color.White else Color.White.copy(alpha = 0.5f)
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                             )
                         }
                     }
@@ -211,7 +234,7 @@ fun DashboardScreen(viewModel: AetherViewModel) {
                     title = "Total Reach",
                     value = formatNumber(totalReach),
                     subValue = "+12%",
-                    icon = { Icon(Icons.Default.TrendingUp, "Reach", tint = Color(0xFF3B82F6)) },
+                    icon = { Icon(Icons.Default.TrendingUp, "Reach", tint = MaterialTheme.colorScheme.primary) },
                     modifier = Modifier.weight(1f)
                 )
                 GlassMetricCard(
@@ -234,11 +257,11 @@ fun DashboardScreen(viewModel: AetherViewModel) {
                 Text(
                     text = "UPCOMING DESIGN DECK (${pendingBriefs.size})",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.White.copy(alpha = 0.5f),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                     fontWeight = FontWeight.Bold
                 )
                 TextButton(onClick = { viewModel.navigateTo(Screen.SCHEDULE) }) {
-                    Text("View Schedule ↗")
+                    Text("View Schedule ↗", color = MaterialTheme.colorScheme.primary)
                 }
             }
 
@@ -251,7 +274,7 @@ fun DashboardScreen(viewModel: AetherViewModel) {
                     Text(
                         text = "Your content schedule is empty.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.5f),
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -278,7 +301,7 @@ fun DashboardScreen(viewModel: AetherViewModel) {
             Text(
                 text = "CORE SYSTEM LOGS",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.5f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -288,21 +311,21 @@ fun DashboardScreen(viewModel: AetherViewModel) {
                     Text(
                         text = "No system logs compiled.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.4f)
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
                     )
                 } else {
                     events.take(5).forEach { event ->
                         SystemEventRow(event)
                         HorizontalDivider(
                             modifier = Modifier.padding(vertical = 8.dp),
-                            color = Color(0x0DFFFFFF)
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
                         )
                     }
                     TextButton(
                         onClick = { viewModel.navigateTo(Screen.SETTINGS) },
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     ) {
-                        Text("View Workspace Settings Log")
+                        Text("View Workspace Settings Log", color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
@@ -312,15 +335,16 @@ fun DashboardScreen(viewModel: AetherViewModel) {
 
         // Action Dialog showing post details and edit options
         selectedBriefForDialog?.let { brief ->
+            val isDark = isSystemInDarkTheme()
             AlertDialog(
                 onDismissRequest = { selectedBriefForDialog = null },
-                containerColor = ObsidianBg,
-                modifier = Modifier.border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(20.dp)),
+                containerColor = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f), RoundedCornerShape(20.dp)),
                 title = {
                     Text(
                         text = brief.topic,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onBackground,
                         fontSize = 18.sp
                     )
                 },
@@ -330,24 +354,24 @@ fun DashboardScreen(viewModel: AetherViewModel) {
                     ) {
                         Text(
                             text = "CAPTION:",
-                            color = Color.White.copy(alpha = 0.5f),
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                             style = MaterialTheme.typography.labelSmall
                         )
                         Text(
                             text = brief.caption,
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onBackground,
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.padding(vertical = 4.dp)
                         )
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(
                             text = "IMAGE PROMPT:",
-                            color = Color.White.copy(alpha = 0.5f),
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                             style = MaterialTheme.typography.labelSmall
                         )
                         Text(
                             text = brief.imagePrompt,
-                            color = Color.White.copy(alpha = 0.8f),
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
                             style = MaterialTheme.typography.bodySmall
                         )
                         
@@ -360,7 +384,7 @@ fun DashboardScreen(viewModel: AetherViewModel) {
                                     .fillMaxWidth()
                                     .height(140.dp)
                                     .clip(RoundedCornerShape(10.dp))
-                                    .background(Color(0xFF0F172A)),
+                                    .background(if (isDark) Slate900 else Slate100),
                                 contentScale = ContentScale.Crop
                             )
                         }
@@ -376,7 +400,10 @@ fun DashboardScreen(viewModel: AetherViewModel) {
                                 viewModel.publishBriefImmediate(brief.id)
                                 selectedBriefForDialog = null
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC4899)),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Icon(Icons.Default.Send, contentDescription = "Publish", modifier = Modifier.size(16.dp))
@@ -399,6 +426,7 @@ fun DashboardBriefCard(
 ) {
     val formatter = SimpleDateFormat("EEE hh:mm a", Locale.getDefault())
     val formattedTime = formatter.format(Date(brief.slotTime))
+    val isDark = isSystemInDarkTheme()
 
     AetherGlassCard(
         modifier = Modifier
@@ -410,7 +438,7 @@ fun DashboardBriefCard(
                 .fillMaxWidth()
                 .height(140.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFF0F172A))
+                .background(if (isDark) Slate900 else Slate100)
         ) {
             if (brief.imageUrl.isNotEmpty()) {
                 AsyncImage(
@@ -424,7 +452,7 @@ fun DashboardBriefCard(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = Color(0xFF3B82F6))
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             }
 
@@ -435,12 +463,12 @@ fun DashboardBriefCard(
                     .padding(8.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color.Black.copy(alpha = 0.6f))
-                    .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(8.dp))
+                    .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
                     .padding(horizontal = 6.dp, vertical = 2.dp)
             ) {
                 Text(
                     text = "Score: ${(brief.predictedScore * 100).toInt()}%",
-                    color = Color(0xFF34D399),
+                    color = Emerald500,
                     fontWeight = FontWeight.Bold,
                     fontSize = 10.sp
                 )
@@ -469,14 +497,14 @@ fun DashboardBriefCard(
             text = brief.topic,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onBackground,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
         Text(
             text = brief.caption,
             style = MaterialTheme.typography.bodySmall,
-            color = Color.White.copy(alpha = 0.6f),
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             lineHeight = 15.sp,
@@ -495,7 +523,10 @@ fun DashboardBriefCard(
                     Button(
                         onClick = onPublish,
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC4899)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
                         contentPadding = PaddingValues(0.dp)
                     ) {
                         Text("PUBLISH NOW", fontSize = 10.sp, fontWeight = FontWeight.Bold)
@@ -505,7 +536,10 @@ fun DashboardBriefCard(
                     Button(
                         onClick = onApprove,
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Emerald500,
+                            contentColor = Color.White
+                        ),
                         contentPadding = PaddingValues(0.dp)
                     ) {
                         Text("APPROVE SLOT", fontSize = 10.sp, fontWeight = FontWeight.Bold)
@@ -521,7 +555,7 @@ fun SystemEventRow(event: SystemEvent) {
     val color = when (event.severity) {
         "error" -> Color(0xFFEF4444)
         "warn" -> Color(0xFFF59E0B)
-        else -> Color(0xFF34D399)
+        else -> Emerald500
     }
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -538,12 +572,12 @@ fun SystemEventRow(event: SystemEvent) {
             Text(
                 text = event.message,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.White.copy(alpha = 0.9f)
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.9f)
             )
             Text(
                 text = SimpleDateFormat("MMM dd HH:mm", Locale.getDefault()).format(Date(event.timestamp)),
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.4f)
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
             )
         }
     }

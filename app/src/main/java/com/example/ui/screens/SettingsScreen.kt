@@ -22,6 +22,7 @@ import com.example.data.AppSettings
 import com.example.ui.components.AetherGlassCard
 import com.example.ui.components.LiquidBackground
 import com.example.ui.viewmodel.AetherViewModel
+import com.example.ui.theme.*
 
 @Composable
 fun SettingsScreen(viewModel: AetherViewModel) {
@@ -80,12 +81,12 @@ fun SettingsScreen(viewModel: AetherViewModel) {
                 text = "Workspace Configurations",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onBackground
             )
             Text(
                 text = "Calibrate secret pathways and brand indices",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.White.copy(alpha = 0.5f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
@@ -93,7 +94,7 @@ fun SettingsScreen(viewModel: AetherViewModel) {
             Text(
                 text = "BRAND VOICE BLUEPRINT",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.5f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -160,7 +161,10 @@ fun SettingsScreen(viewModel: AetherViewModel) {
                         )
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
                 ) {
                     Text("Save Brand Settings")
                 }
@@ -170,7 +174,7 @@ fun SettingsScreen(viewModel: AetherViewModel) {
             Text(
                 text = "SYNAPSE & ROUTER SECRETS",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.5f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -187,7 +191,7 @@ fun SettingsScreen(viewModel: AetherViewModel) {
                 ) {
                     Text(
                         text = "Show Synapse Connections",
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onBackground,
                         style = MaterialTheme.typography.bodyMedium
                     )
 
@@ -195,8 +199,8 @@ fun SettingsScreen(viewModel: AetherViewModel) {
                         checked = showSecretsBlock,
                         onCheckedChange = { showSecretsBlock = it },
                         colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color(0xFF3B82F6),
-                            checkedTrackColor = Color(0xFF3B82F6).copy(alpha = 0.3f)
+                            checkedThumbColor = MaterialTheme.colorScheme.primary,
+                            checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                         )
                     )
                 }
@@ -304,7 +308,10 @@ fun SettingsScreen(viewModel: AetherViewModel) {
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = if (hasErrors) Color.Gray else Color(0xFF10B981)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (hasErrors) Color.Gray else Emerald500,
+                            contentColor = Color.White
+                        ),
                         enabled = !hasErrors
                     ) {
                         Text("Save Secrets")
@@ -316,7 +323,7 @@ fun SettingsScreen(viewModel: AetherViewModel) {
             Text(
                 text = "DANGER PIPELINE CONTROL",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.Red.copy(alpha = 0.7f),
+                color = Color(0xFFEF4444),
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -329,14 +336,14 @@ fun SettingsScreen(viewModel: AetherViewModel) {
                 Text(
                     text = "A full reset unlinks your Supabase server instances, drops local indexes, and wipes scheduled posts.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.5f),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
 
                 if (showResetVerify) {
                     Text(
                         text = "Are you absolutely sure? This operation is irreversible.",
-                        color = Color.Red,
+                        color = Color(0xFFEF4444),
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -347,7 +354,10 @@ fun SettingsScreen(viewModel: AetherViewModel) {
                     ) {
                         Button(
                             onClick = { showResetVerify = false },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
                             modifier = Modifier.weight(1f)
                         ) {
                             Text("Abort")
@@ -357,7 +367,10 @@ fun SettingsScreen(viewModel: AetherViewModel) {
                                 viewModel.resetInstallation()
                                 showResetVerify = false
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFEF4444),
+                                contentColor = Color.White
+                            ),
                             modifier = Modifier.weight(1f)
                         ) {
                             Text("Confirm Reset")

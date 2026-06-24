@@ -32,14 +32,83 @@ class PublishWorker(context: Context, params: WorkerParameters) : CoroutineWorke
             secureStorage
         )
 
-        val settings = repository.getSettingsDirect() ?: AppSettings()
+        val settings = repository.getSettingsRaw() ?: AppSettings()
         
-        // If system hasn't completed setup or is in purely manual mode, stop
-        if (!settings.isSetupComplete || settings.postingMode == "manual") {
+        if (!settings.isSetupComplete) {
             return Result.success()
         }
 
         val now = System.currentTimeMillis()
+        
+        // 1. PERFORM SUPABASE SYNCHRONIZATION CYCLES
+        val supabaseUrl = settings.supabaseUrl.trim()
+        val supabaseKey = if (settings.serviceRoleKey.trim().isNotEmpty()) settings.serviceRoleKey.trim() else settings.anonKey.trim()
+
+        if (supabaseUrl.isNotEmpty() && supabaseKey.isNotEmpty()) {
+            try {
+                repository.insertEvent(
+                    category = "scheduler",
+                    severity = "info",
+                    message = "Starting background synchronization with Supabase backend..."
+                )
+
+                // A. Pull Remote Briefs
+                val remoteBriefs = com.example.api.SupabaseService.pullBriefs(supabaseUrl, supabaseKey)
+                if (remoteBriefs.isNotEmpty()) {
+                    val localBriefs = repository.allBriefsFlow.first()
+                    val localMap = localBriefs.associateBy { it.id }
+                    
+                    for (remote in remoteBriefs) {
+                        val local = localMap[remote.id]
+                        if (local == null) {
+                            repository.insertBrief(remote)
+                        } else if (local.status != remote.status || local.isApproved != remote.isApproved || local.slotTime != remote.slotTime) {
+                            repository.updateBrief(remote)
+                        }
+                    }
+                }
+
+                // B. Push Local Briefs
+                val currentBriefs = repository.allBriefsFlow.first()
+                if (currentBriefs.isNotEmpty()) {
+                    com.example.api.SupabaseService.pushBriefs(supabaseUrl, supabaseKey, currentBriefs)
+                }
+
+                // C. Push Local Events
+                val recentEvents = repository.recentEventsFlow.first()
+                if (recentEvents.isNotEmpty()) {
+                    com.example.api.SupabaseService.pushSystemEvents(supabaseUrl, supabaseKey, recentEvents)
+                }
+
+                // D. Push Cost Entries & Snapshots
+                val costEntries = repository.costEntriesFlow.first()
+                if (costEntries.isNotEmpty()) {
+                    com.example.api.SupabaseService.pushCostEntries(supabaseUrl, supabaseKey, costEntries)
+                }
+
+                val snapshots = repository.snapshotsFlow.first()
+                if (snapshots.isNotEmpty()) {
+                    com.example.api.SupabaseService.pushEngagementSnapshots(supabaseUrl, supabaseKey, snapshots)
+                }
+
+                repository.insertEvent(
+                    category = "scheduler",
+                    severity = "info",
+                    message = "Supabase background synchronization completed successfully."
+                )
+            } catch (e: Exception) {
+                repository.insertEvent(
+                    category = "scheduler",
+                    severity = "warn",
+                    message = "Supabase sync cycle warning: ${e.localizedMessage}"
+                )
+            }
+        }
+
+        if (settings.postingMode == "manual") {
+            return Result.success()
+        }
+
         try {
             // Get all briefs from the Flow
             val allBriefs = repository.allBriefsFlow.first()

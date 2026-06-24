@@ -27,6 +27,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ui.components.LiquidBackground
 import com.example.ui.screens.*
 import com.example.ui.theme.MyApplicationTheme
+import com.example.ui.theme.Slate900
+import androidx.compose.foundation.isSystemInDarkTheme
 import com.example.ui.viewmodel.AetherViewModel
 import com.example.ui.viewmodel.Screen
 
@@ -38,6 +40,7 @@ class MainActivity : ComponentActivity() {
             MyApplicationTheme {
                 val viewModel: AetherViewModel = viewModel()
                 val currentScreen by viewModel.currentScreen.collectAsState()
+                val toastMessages by viewModel.toastMessages.collectAsState()
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -72,6 +75,13 @@ class MainActivity : ComponentActivity() {
                                 Screen.SETTINGS -> SettingsScreen(viewModel = viewModel)
                             }
                         }
+
+                        // Floating custom toast notifications overlay
+                        com.example.ui.components.ToastOverlay(
+                            messages = toastMessages,
+                            onDismiss = { id -> viewModel.dismissToast(id) },
+                            modifier = Modifier.align(Alignment.TopCenter)
+                        )
                     }
                 }
             }
@@ -84,6 +94,7 @@ fun FloatingGlassBottomBar(
     currentScreen: Screen,
     onNavigate: (Screen) -> Unit
 ) {
+    val isDark = isSystemInDarkTheme()
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -97,11 +108,11 @@ fun FloatingGlassBottomBar(
                 .width(340.dp)
                 .height(64.dp)
                 .clip(RoundedCornerShape(32.dp))
-                .background(Color(0x1F111827))
+                .background(if (isDark) Color(0xD21E293B) else Color(0xE6F1F5F9))
                 .border(
                     width = 1.dp,
                     brush = Brush.linearGradient(
-                        colors = listOf(Color(0x52FFFFFF), Color(0x14FFFFFF))
+                        colors = if (isDark) listOf(Color(0x3DFFFFFF), Color(0x14FFFFFF)) else listOf(Color(0x3D000000), Color(0x0F000000))
                     ),
                     shape = RoundedCornerShape(32.dp)
                 )
@@ -137,7 +148,7 @@ fun FloatingGlassBottomBar(
                         Icon(
                             imageVector = icon,
                             contentDescription = label,
-                            tint = if (isSelected) selectionColor else Color.White.copy(alpha = 0.45f),
+                            tint = if (isSelected) selectionColor else (if (isDark) Color.White.copy(alpha = 0.45f) else Slate900.copy(alpha = 0.45f)),
                             modifier = Modifier.size(if (isSelected) 26.dp else 22.dp)
                         )
                         if (isSelected) {

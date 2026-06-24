@@ -8,33 +8,51 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme =
-  darkColorScheme(primary = Purple80, secondary = PurpleGrey80, tertiary = Pink80)
+  darkColorScheme(
+    primary = Blue500,
+    onPrimary = Color.White,
+    secondary = Slate400,
+    onSecondary = Slate900,
+    tertiary = Emerald500,
+    onTertiary = Slate900,
+    background = Slate900,
+    onBackground = Slate50,
+    surface = Slate800,
+    onSurface = Slate50,
+    surfaceVariant = Slate700,
+    onSurfaceVariant = Slate200,
+    outline = Slate600,
+    error = Red500,
+    onError = Color.White
+  )
 
 private val LightColorScheme =
   lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40,
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+    primary = Blue500,
     onPrimary = Color.White,
+    secondary = Slate600,
     onSecondary = Color.White,
+    tertiary = Emerald500,
     onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    background = Color.White,
+    onBackground = Slate900,
+    surface = Slate50,
+    onSurface = Slate900,
+    surfaceVariant = Slate100,
+    onSurfaceVariant = Slate700,
+    outline = Slate200,
+    error = Red500,
+    onError = Color.White
   )
 
 @Composable
 fun MyApplicationTheme(
   darkTheme: Boolean = isSystemInDarkTheme(),
-  // Dynamic color is available on Android 12+
-  dynamicColor: Boolean = true,
+  dynamicColor: Boolean = false, // Use our custom clean Slate brand palette exclusively
   content: @Composable () -> Unit,
 ) {
   val colorScheme =

@@ -3,6 +3,7 @@ package com.example.ui.screens
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -80,6 +81,7 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
 
     var showSecrets by remember { mutableStateOf(false) }
 
+    val isDark = isSystemInDarkTheme()
     LiquidBackground {
         if (setupState.isRunning) {
             // Setup Progress Console
@@ -94,7 +96,7 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                     Text(
                         text = "Aether Provision Engine",
                         style = MaterialTheme.typography.headlineSmall,
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onBackground,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
@@ -103,7 +105,7 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                     Text(
                         text = setupState.statusText,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFF3B82F6),
+                        color = MaterialTheme.colorScheme.primary,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -115,15 +117,15 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                             .fillMaxWidth()
                             .height(8.dp)
                             .clip(RoundedCornerShape(4.dp)),
-                        color = Color(0xFFEC4899),
-                        trackColor = Color(0x3DFFFFFF)
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f)
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(
                         text = "TERMINAL SYNCHRONIZATION LOG:",
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color.White.copy(alpha = 0.5f),
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -133,8 +135,8 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                             .fillMaxWidth()
                             .height(220.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFF020308))
-                            .border(1.dp, Color(0x1AFFFFFF), RoundedCornerShape(12.dp))
+                            .background(if (isDark) Color(0xFF020308) else Color(0xFF0F172A)) // Slate 900 dark theme log look in both modes
+                            .border(1.dp, if (isDark) Color(0x1AFFFFFF) else Color(0x33FFFFFF), RoundedCornerShape(12.dp))
                             .padding(12.dp)
                     ) {
                         LazyColumn(
@@ -178,7 +180,7 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                     style = MaterialTheme.typography.displayMedium,
                     fontWeight = FontWeight.Black,
                     letterSpacing = 4.sp,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onBackground,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -186,7 +188,7 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                     text = "A U T O M A T I O N  W I Z A R D",
                     style = MaterialTheme.typography.labelSmall,
                     letterSpacing = 3.sp,
-                    color = Color(0xFF3B82F6),
+                    color = MaterialTheme.colorScheme.primary,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -206,7 +208,7 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Go Back",
-                                tint = Color.White
+                                tint = MaterialTheme.colorScheme.onBackground
                             )
                         }
                     } else {
@@ -216,7 +218,7 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                     Text(
                         text = "Step $currentStep of 5",
                         style = MaterialTheme.typography.titleMedium,
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onBackground,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -235,7 +237,7 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                 .padding(horizontal = 4.dp)
                                 .size(if (currentStep == i) 12.dp else 8.dp)
                                 .clip(RoundedCornerShape(50))
-                                .background(if (currentStep == i) Color(0xFFEC4899) else Color.White.copy(alpha = 0.3f))
+                                .background(if (currentStep == i) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.25f))
                         )
                     }
                 }
@@ -258,7 +260,7 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                 Text(
                                     text = "1. Supabase Datastore Backplane",
                                     style = MaterialTheme.typography.titleLarge,
-                                    color = Color.White,
+                                    color = MaterialTheme.colorScheme.onBackground,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(bottom = 12.dp)
                                 )
@@ -267,7 +269,7 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     Text(
                                         text = "Setup the real distributed relational database for tracking calendar briefs, cost ledgers, and synchronized telemetry metadata.",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = Color.White.copy(alpha = 0.7f)
+                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
                                     )
                                 }
 
@@ -314,17 +316,19 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
 
                                 Spacer(modifier = Modifier.height(16.dp))
 
-                                // Show Active test diagnostics feedback
+                                 // Show Active test diagnostics feedback
                                 val t = supabaseTest
                                 if (t != null) {
+                                    val testColor = if (t.isSuccess) (if (isDark) Color(0xFF34D399) else Color(0xFF047857)) else (if (isDark) Color(0xFFFCA5A5) else Color(0xFFB91C1C))
+                                    val testBg = if (t.isSuccess) (if (isDark) Color(0x1F10B981) else Color(0xFFECFDF5)) else (if (isDark) Color(0x1FEF4444) else Color(0xFFFEF2F2))
                                     Card(
                                         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                                        colors = CardDefaults.cardColors(containerColor = if (t.isSuccess) Color(0x3310B981) else Color(0x33EF4444))
+                                        colors = CardDefaults.cardColors(containerColor = testBg)
                                     ) {
                                         Text(
                                             text = t.message,
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = Color.White,
+                                            color = testColor,
                                             modifier = Modifier.padding(12.dp)
                                         )
                                     }
@@ -344,7 +348,10 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     Button(
                                         onClick = { viewModel.testSupabaseConnection(supabaseUrl, anonKey) },
                                         modifier = Modifier.weight(1f),
-                                        colors = ButtonDefaults.buttonColors(containerColor = if (step1Errors) Color.Gray else Color(0xFF4B5563)),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (step1Errors) Color.Gray else MaterialTheme.colorScheme.secondary,
+                                            contentColor = if (step1Errors) Color.LightGray else MaterialTheme.colorScheme.onSecondary
+                                        ),
                                         enabled = !step1Errors
                                     ) {
                                         Text("Test", fontWeight = FontWeight.Bold)
@@ -363,7 +370,10 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                             currentStep = 2
                                         },
                                         modifier = Modifier.weight(1.5f),
-                                        colors = ButtonDefaults.buttonColors(containerColor = if (step1Errors) Color.Gray else Color(0xFF3B82F6)),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (step1Errors) Color.Gray else MaterialTheme.colorScheme.primary,
+                                            contentColor = if (step1Errors) Color.LightGray else MaterialTheme.colorScheme.onPrimary
+                                        ),
                                         enabled = !step1Errors
                                     ) {
                                         Text("Save & continue", fontWeight = FontWeight.Bold)
@@ -375,7 +385,7 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                 Text(
                                     text = "2. Facebook Page Integration",
                                     style = MaterialTheme.typography.titleLarge,
-                                    color = Color.White,
+                                    color = MaterialTheme.colorScheme.onBackground,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(bottom = 12.dp)
                                 )
@@ -384,7 +394,7 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     Text(
                                         text = "Authorize direct, fully automated publishing of approved graphics & creative briefs onto your Facebook Page feed using Graph nodes.",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = Color.White.copy(alpha = 0.7f)
+                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
                                     )
                                 }
 
@@ -411,14 +421,16 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
 
                                 val t = facebookTest
                                 if (t != null) {
+                                    val testColor = if (t.isSuccess) (if (isDark) Color(0xFF34D399) else Color(0xFF047857)) else (if (isDark) Color(0xFFFCA5A5) else Color(0xFFB91C1C))
+                                    val testBg = if (t.isSuccess) (if (isDark) Color(0x1F10B981) else Color(0xFFECFDF5)) else (if (isDark) Color(0x1FEF4444) else Color(0xFFFEF2F2))
                                     Card(
                                         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                                        colors = CardDefaults.cardColors(containerColor = if (t.isSuccess) Color(0x3310B981) else Color(0x33EF4444))
+                                        colors = CardDefaults.cardColors(containerColor = testBg)
                                     ) {
                                         Text(
                                             text = t.message,
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = Color.White,
+                                            color = testColor,
                                             modifier = Modifier.padding(12.dp)
                                         )
                                     }
@@ -436,7 +448,10 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     Button(
                                         onClick = { viewModel.testFacebookConnection(facebookToken, facebookPageId) },
                                         modifier = Modifier.weight(1f),
-                                        colors = ButtonDefaults.buttonColors(containerColor = if (step2Errors) Color.Gray else Color(0xFF4B5563)),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (step2Errors) Color.Gray else MaterialTheme.colorScheme.secondary,
+                                            contentColor = if (step2Errors) Color.LightGray else MaterialTheme.colorScheme.onSecondary
+                                        ),
                                         enabled = !step2Errors
                                     ) {
                                         Text("Test", fontWeight = FontWeight.Bold)
@@ -453,7 +468,10 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                             currentStep = 3
                                         },
                                         modifier = Modifier.weight(1.5f),
-                                        colors = ButtonDefaults.buttonColors(containerColor = if (step2Errors) Color.Gray else Color(0xFF3B82F6)),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (step2Errors) Color.Gray else MaterialTheme.colorScheme.primary,
+                                            contentColor = if (step2Errors) Color.LightGray else MaterialTheme.colorScheme.onPrimary
+                                        ),
                                         enabled = !step2Errors
                                     ) {
                                         Text("Save & continue", fontWeight = FontWeight.Bold)
@@ -465,7 +483,7 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                 Text(
                                     text = "3. Main Generative Brain",
                                     style = MaterialTheme.typography.titleLarge,
-                                    color = Color.White,
+                                    color = MaterialTheme.colorScheme.onBackground,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(bottom = 12.dp)
                                 )
@@ -474,12 +492,12 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     Text(
                                         text = "Main language model processor used to draft creative briefs, brainstorm captions, pair hashtag clusters, and plan image compositions. Open AI Compatible & Gemini are supported.",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = Color.White.copy(alpha = 0.7f)
+                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
                                     )
                                 }
 
                                 // Custom selectable registry chips
-                                Text("Provider Compatible Mode", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
+                                Text("Provider Compatible Mode", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
                                 Row(
                                     modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -490,15 +508,15 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                             modifier = Modifier
                                                 .weight(1f)
                                                 .clip(RoundedCornerShape(8.dp))
-                                                .background(if (isSel) Color(0xFF3B82F6).copy(alpha = 0.2f) else Color(0x0AFFFFFF))
-                                                .border(1.dp, if (isSel) Color(0xFF3B82F6) else Color(0x1BFFFFFF), RoundedCornerShape(8.dp))
+                                                .background(if (isSel) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                                                .border(1.dp, if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
                                                 .padding(12.dp)
                                                 .clip(RoundedCornerShape(8.dp)),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Text(
                                                 text = label,
-                                                color = if (isSel) Color.White else Color.White.copy(alpha = 0.6f),
+                                                color = if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                                                 style = MaterialTheme.typography.labelMedium,
                                                 fontWeight = FontWeight.Bold
                                             )
@@ -537,14 +555,16 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
 
                                 val t = mainAiTest
                                 if (t != null) {
+                                    val testColor = if (t.isSuccess) (if (isDark) Color(0xFF34D399) else Color(0xFF047857)) else (if (isDark) Color(0xFFFCA5A5) else Color(0xFFB91C1C))
+                                    val testBg = if (t.isSuccess) (if (isDark) Color(0x1F10B981) else Color(0xFFECFDF5)) else (if (isDark) Color(0x1FEF4444) else Color(0xFFFEF2F2))
                                     Card(
                                         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                                        colors = CardDefaults.cardColors(containerColor = if (t.isSuccess) Color(0x3310B981) else Color(0x33EF4444))
+                                        colors = CardDefaults.cardColors(containerColor = testBg)
                                     ) {
                                         Text(
                                             text = t.message,
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = Color.White,
+                                            color = testColor,
                                             modifier = Modifier.padding(12.dp)
                                         )
                                     }
@@ -563,7 +583,10 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     Button(
                                         onClick = { viewModel.testMainAIConnection(aiProvider, aiBaseUrl, aiModel, aiApiKey) },
                                         modifier = Modifier.weight(1f),
-                                        colors = ButtonDefaults.buttonColors(containerColor = if (step3Errors) Color.Gray else Color(0xFF4B5563)),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (step3Errors) Color.Gray else MaterialTheme.colorScheme.secondary,
+                                            contentColor = if (step3Errors) Color.LightGray else MaterialTheme.colorScheme.onSecondary
+                                        ),
                                         enabled = !step3Errors
                                     ) {
                                         Text("Test endpoint", fontWeight = FontWeight.Bold, fontSize = 12.sp)
@@ -582,7 +605,10 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                             currentStep = 4
                                         },
                                         modifier = Modifier.weight(1.3f),
-                                        colors = ButtonDefaults.buttonColors(containerColor = if (step3Errors) Color.Gray else Color(0xFF3B82F6)),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (step3Errors) Color.Gray else MaterialTheme.colorScheme.primary,
+                                            contentColor = if (step3Errors) Color.LightGray else MaterialTheme.colorScheme.onPrimary
+                                        ),
                                         enabled = !step3Errors
                                     ) {
                                         Text("Save continue", fontWeight = FontWeight.Bold, fontSize = 12.sp)
@@ -594,7 +620,7 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                 Text(
                                     text = "4. Creative Image AI Engine",
                                     style = MaterialTheme.typography.titleLarge,
-                                    color = Color.White,
+                                    color = MaterialTheme.colorScheme.onBackground,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(bottom = 12.dp)
                                 )
@@ -603,11 +629,11 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     Text(
                                         text = "Configure the machine vision rendering pipeline. Select Pollinations AI (free, no apiKey needed, flux driven) or any custom OpenAI-compatible DALL-E endpoint.",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = Color.White.copy(alpha = 0.7f)
+                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
                                     )
                                 }
 
-                                Text("Image Provider Registry", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
+                                Text("Image Provider Registry", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
                                 Row(
                                     modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -618,15 +644,15 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                             modifier = Modifier
                                                 .weight(1f)
                                                 .clip(RoundedCornerShape(8.dp))
-                                                .background(if (isSel) Color(0xFF3B82F6).copy(alpha = 0.2f) else Color(0x0AFFFFFF))
-                                                .border(1.dp, if (isSel) Color(0xFF3B82F6) else Color(0x1BFFFFFF), RoundedCornerShape(8.dp))
+                                                .background(if (isSel) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                                                .border(1.dp, if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
                                                 .padding(12.dp)
                                                 .clip(RoundedCornerShape(8.dp)),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Text(
                                                 text = label,
-                                                color = if (isSel) Color.White else Color.White.copy(alpha = 0.6f),
+                                                color = if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                                                 style = MaterialTheme.typography.labelMedium,
                                                 fontWeight = FontWeight.Bold
                                             )
@@ -665,14 +691,16 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
 
                                 val t = imageAiTest
                                 if (t != null) {
+                                    val testColor = if (t.isSuccess) (if (isDark) Color(0xFF34D399) else Color(0xFF047857)) else (if (isDark) Color(0xFFFCA5A5) else Color(0xFFB91C1C))
+                                    val testBg = if (t.isSuccess) (if (isDark) Color(0x1F10B981) else Color(0xFFECFDF5)) else (if (isDark) Color(0x1FEF4444) else Color(0xFFFEF2F2))
                                     Card(
                                         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                                        colors = CardDefaults.cardColors(containerColor = if (t.isSuccess) Color(0x3310B981) else Color(0x33EF4444))
+                                        colors = CardDefaults.cardColors(containerColor = testBg)
                                     ) {
                                         Text(
                                             text = t.message,
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = Color.White,
+                                            color = testColor,
                                             modifier = Modifier.padding(12.dp)
                                         )
                                     }
@@ -691,7 +719,10 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     Button(
                                         onClick = { viewModel.testImageAIConnection(imageProvider, imageBaseUrl, imageModel, imageApiKey) },
                                         modifier = Modifier.weight(1f),
-                                        colors = ButtonDefaults.buttonColors(containerColor = if (step4Errors) Color.Gray else Color(0xFF4B5563)),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (step4Errors) Color.Gray else MaterialTheme.colorScheme.secondary,
+                                            contentColor = if (step4Errors) Color.LightGray else MaterialTheme.colorScheme.onSecondary
+                                        ),
                                         enabled = !step4Errors
                                     ) {
                                         Text("Test endpoint", fontWeight = FontWeight.Bold, fontSize = 12.sp)
@@ -710,7 +741,10 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                             currentStep = 5
                                         },
                                         modifier = Modifier.weight(1.3f),
-                                        colors = ButtonDefaults.buttonColors(containerColor = if (step4Errors) Color.Gray else Color(0xFF3B82F6)),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (step4Errors) Color.Gray else MaterialTheme.colorScheme.primary,
+                                            contentColor = if (step4Errors) Color.LightGray else MaterialTheme.colorScheme.onPrimary
+                                        ),
                                         enabled = !step4Errors
                                     ) {
                                         Text("Save continue", fontWeight = FontWeight.Bold, fontSize = 12.sp)
@@ -722,7 +756,7 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                 Text(
                                     text = "5. Brand Identity & Automations",
                                     style = MaterialTheme.typography.titleLarge,
-                                    color = Color.White,
+                                    color = MaterialTheme.colorScheme.onBackground,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(bottom = 12.dp)
                                 )
@@ -768,41 +802,45 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Text("Post Frequency / Day", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
+                                        Text("Post Frequency / Day", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
                                         OutlinedTextField(
                                             value = postFrequency,
                                             onValueChange = { postFrequency = it },
                                             singleLine = true,
                                             maxLines = 1,
                                             colors = OutlinedTextFieldDefaults.colors(
-                                                focusedTextColor = Color.White,
-                                                unfocusedTextColor = Color.White,
-                                                focusedBorderColor = Color(0xFF3B82F6),
-                                                unfocusedBorderColor = Color(0x33FFFFFF)
+                                                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                                                unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                                unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f),
+                                                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                                             ),
                                             shape = RoundedCornerShape(10.dp)
                                         )
                                     }
 
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Text("Spend Cap / Day ($)", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
+                                        Text("Spend Cap / Day ($)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
                                         OutlinedTextField(
                                             value = dailySpendCap,
                                             onValueChange = { dailySpendCap = it },
                                             singleLine = true,
                                             maxLines = 1,
                                             colors = OutlinedTextFieldDefaults.colors(
-                                                focusedTextColor = Color.White,
-                                                unfocusedTextColor = Color.White,
-                                                focusedBorderColor = Color(0xFF3B82F6),
-                                                unfocusedBorderColor = Color(0x33FFFFFF)
+                                                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                                                unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                                unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f),
+                                                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                                             ),
                                             shape = RoundedCornerShape(10.dp)
                                         )
                                     }
                                 }
 
-                                Text("Automation Posting Mode", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
+                                Text("Automation Posting Mode", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
                                 Row(
                                     modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -813,15 +851,15 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                             modifier = Modifier
                                                 .weight(1f)
                                                 .clip(RoundedCornerShape(8.dp))
-                                                .background(if (isSel) Color(0xFF3B82F6).copy(alpha = 0.2f) else Color(0x0AFFFFFF))
-                                                .border(1.dp, if (isSel) Color(0xFF3B82F6) else Color(0x1BFFFFFF), RoundedCornerShape(8.dp))
+                                                .background(if (isSel) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                                                .border(1.dp, if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
                                                 .padding(10.dp)
                                                 .clip(RoundedCornerShape(8.dp)),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Text(
                                                 text = label,
-                                                color = if (isSel) Color.White else Color.White.copy(alpha = 0.6f),
+                                                color = if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                                                 style = MaterialTheme.typography.labelSmall,
                                                 fontWeight = FontWeight.Bold
                                             )
@@ -868,7 +906,10 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                         .fillMaxWidth()
                                         .height(56.dp)
                                         .clip(RoundedCornerShape(14.dp)),
-                                    colors = ButtonDefaults.buttonColors(containerColor = if (step5Errors) Color.Gray else Color(0xFFEC4899)),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (step5Errors) Color.Gray else MaterialTheme.colorScheme.primary,
+                                        contentColor = if (step5Errors) Color.LightGray else MaterialTheme.colorScheme.onPrimary
+                                    ),
                                     enabled = !step5Errors
                                 ) {
                                     Text(
@@ -899,11 +940,12 @@ fun WizardTextField(
     onToggleSecret: (() -> Unit)? = null,
     errorMessage: String? = null
 ) {
+    val isDark = isSystemInDarkTheme()
     Column(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = Color.White.copy(alpha = 0.6f),
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(bottom = 4.dp)
         )
@@ -914,7 +956,7 @@ fun WizardTextField(
             maxLines = 1,
             singleLine = true,
             isError = errorMessage != null,
-            placeholder = { Text(text = placeholder, color = Color.White.copy(alpha = 0.25f)) },
+            placeholder = { Text(text = placeholder, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.35f)) },
             visualTransformation = if (isSecret && !showSecret) PasswordVisualTransformation() else VisualTransformation.None,
             trailingIcon = {
                 if (isSecret && onToggleSecret != null) {
@@ -922,20 +964,20 @@ fun WizardTextField(
                         Icon(
                             imageVector = if (showSecret) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                             contentDescription = "Toggle Secret",
-                            tint = Color.White.copy(alpha = 0.4f)
+                            tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                         )
                     }
                 }
             },
             colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedBorderColor = Color(0xFF3B82F6),
-                unfocusedBorderColor = Color(0x33FFFFFF),
+                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f),
                 errorBorderColor = MaterialTheme.colorScheme.error,
-                focusedContainerColor = Color(0x0AFFFFFF),
-                unfocusedContainerColor = Color(0x05FFFFFF),
-                focusedLabelColor = Color(0xFF3B82F6)
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                focusedLabelColor = MaterialTheme.colorScheme.primary
             ),
             shape = RoundedCornerShape(10.dp)
         )

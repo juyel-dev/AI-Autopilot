@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.*
 import com.example.data.*
 import com.example.scheduler.PublishWorker
+import com.example.ui.components.ToastMessage
+import com.example.ui.components.ToastType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
@@ -53,6 +55,23 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
     private val _setupState = MutableStateFlow(SetupProgressState())
     val setupState: StateFlow<SetupProgressState> = _setupState.asStateFlow()
 
+    // Toast notifications flow
+    private val _toastMessages = MutableStateFlow<List<ToastMessage>>(emptyList())
+    val toastMessages: StateFlow<List<ToastMessage>> = _toastMessages.asStateFlow()
+
+    fun showToast(message: String, type: ToastType = ToastType.INFO) {
+        val toast = ToastMessage(message = message, type = type)
+        _toastMessages.update { it + toast }
+        viewModelScope.launch {
+            delay(toast.durationMs)
+            dismissToast(toast.id)
+        }
+    }
+
+    fun dismissToast(id: String) {
+        _toastMessages.update { list -> list.filter { it.id != id } }
+    }
+
     // Integration test results flows
     private val _supabaseTestResult = MutableStateFlow<com.example.api.ConnectivityService.TestResult?>(null)
     val supabaseTestResult = _supabaseTestResult.asStateFlow()
@@ -65,6 +84,9 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
 
     private val _imageAiTestResult = MutableStateFlow<com.example.api.ConnectivityService.TestResult?>(null)
     val imageAiTestResult = _imageAiTestResult.asStateFlow()
+
+    private val _isSyncing = MutableStateFlow(false)
+    val isSyncing = _isSyncing.asStateFlow()
 
     // Database Flows
     val appSettings: StateFlow<AppSettings?> = repository.appSettingsFlow
@@ -126,6 +148,11 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
             val result = com.example.api.ConnectivityService.testSupabase(url, anonKey)
             _supabaseTestResult.value = result
             repository.insertEvent("auth", if (result.isSuccess) "info" else "error", "Supabase test: ${result.message}")
+            if (result.isSuccess) {
+                showToast("Supabase connected successfully!", ToastType.SUCCESS)
+            } else {
+                showToast("Supabase setup problem: ${result.message}", ToastType.ERROR)
+            }
         }
     }
 
@@ -135,6 +162,11 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
             val result = com.example.api.ConnectivityService.testFacebookPage(token, pageId)
             _facebookTestResult.value = result
             repository.insertEvent("publish", if (result.isSuccess) "info" else "error", "Facebook test: ${result.message}")
+            if (result.isSuccess) {
+                showToast("Facebook verified successfully!", ToastType.SUCCESS)
+            } else {
+                showToast("Facebook setup failure: ${result.message}", ToastType.ERROR)
+            }
         }
     }
 
@@ -144,6 +176,11 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
             val result = com.example.api.ConnectivityService.testMainAI(provider, baseUrl, model, apiKey)
             _mainAiTestResult.value = result
             repository.insertEvent("ai", if (result.isSuccess) "info" else "error", "Main AI endpoint test: ${result.message}")
+            if (result.isSuccess) {
+                showToast("AI model connected successfully!", ToastType.SUCCESS)
+            } else {
+                showToast("AI endpoint verification failure: ${result.message}", ToastType.ERROR)
+            }
         }
     }
 
@@ -153,6 +190,11 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
             val result = com.example.api.ConnectivityService.testImageAI(provider, baseUrl, model, apiKey)
             _imageAiTestResult.value = result
             repository.insertEvent("ai", if (result.isSuccess) "info" else "error", "Image AI endpoint test: ${result.message}")
+            if (result.isSuccess) {
+                showToast("Image generation endpoint verified!", ToastType.SUCCESS)
+            } else {
+                showToast("Image endpoint check failure: ${result.message}", ToastType.ERROR)
+            }
         }
     }
 
@@ -194,10 +236,20 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch(Dispatchers.IO) {
             _setupState.value = SetupProgressState(
                 isRunning = true,
-                progress = 0.10f,
-                statusText = "Validating Configuration...",
-                logMessages = listOf("Checking connectivity...")
+                progress = 0.05f,
+                statusText = "Initializing Provision Engine...",
+                logMessages = listOf("Booting Aether cloud installer...")
             )
+
+            // Step 1: Pre-validation of input details
+            addSetupLog("Validating credential schema lengths...")
+            delay(500)
+            if (supabaseUrl.isBlank() || anonKey.isBlank()) {
+                addSetupLog("❌ Setup Failed: Supabase URL and Anon Key cannot be empty.")
+                _setupState.update { it.copy(isRunning = false, statusText = "Failed", progress = 1f) }
+                showToast("Missing required Supabase connection parameters", ToastType.ERROR)
+                return@launch
+            }
 
             // Validating credentials and pinging endpoints
             addSetupLog("Testing Supabase Project Connectivity...")
@@ -205,23 +257,49 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
             if (!supabaseRes.isSuccess) {
                 addSetupLog("❌ Setup Failed: Supabase handshake returned error: ${supabaseRes.message}")
                 _setupState.update { it.copy(isRunning = false, statusText = "Failed", progress = 1f) }
+                showToast("Supabase setup problem: ${supabaseRes.message}", ToastType.ERROR)
                 return@launch
             } else {
-                addSetupLog("✅ Supabase successfully verified.")
+                addSetupLog("✅ Supabase basic connectivity verified.")
             }
-            _setupState.update { it.copy(progress = 0.50f) }
 
             if (aiApiKey.isNotEmpty()) {
                 addSetupLog("Testing AI Provider Credentials...")
                 val aiRes = com.example.api.ConnectivityService.testMainAI(aiProvider, aiBaseUrl, aiModel, aiApiKey)
                 if (!aiRes.isSuccess) {
                     addSetupLog("⚠️ Warn: AI handshake failed: ${aiRes.message}")
+                    showToast("AI configuration warning: ${aiRes.message}", ToastType.WARNING)
                 } else {
                     addSetupLog("✅ AI Provider verified.")
                 }
             }
 
-            _setupState.update { it.copy(progress = 0.80f, statusText = "Saving Configuration...") }
+            // Run Setup Provisioning (the 6-step cloud blueprint flow)
+            addSetupLog("Triggering automatic backend provisioning pipeline...")
+            val provSuccess = com.example.api.SupabaseService.runSetupProvisioning(
+                supabaseUrl = supabaseUrl,
+                anonKey = anonKey,
+                serviceRoleKey = serviceRoleKey,
+                patKey = patKey,
+                onProgress = { p, msg ->
+                    _setupState.update { current ->
+                        current.copy(
+                            progress = p,
+                            statusText = msg,
+                            logMessages = current.logMessages + msg
+                        )
+                    }
+                }
+            )
+
+            if (!provSuccess) {
+                addSetupLog("❌ Setup Failed during cloud provisioning steps.")
+                _setupState.update { it.copy(isRunning = false, statusText = "Failed") }
+                showToast("Provisioning failed. Check logs.", ToastType.ERROR)
+                return@launch
+            }
+
+            _setupState.update { it.copy(progress = 0.90f, statusText = "Saving Configuration...") }
 
             // Pre-save AppSettings so the schedule generation can reference them
             repository.clearAllBriefs()
@@ -257,7 +335,8 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
 
             addSetupLog("🎉 SETUP FULLY COMPLETE! Welcome to Aether AI.")
             _setupState.update { it.copy(progress = 1.0f, statusText = "Finalized!") }
-            delay(500)
+            showToast("Workspace setup completed successfully!", ToastType.SUCCESS)
+            delay(1000)
 
             _setupState.update { SetupProgressState() } // Reset progress state
             _currentScreen.value = Screen.DASHBOARD
@@ -284,6 +363,7 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
             repository.saveSettings(defaults)
             
             repository.insertEvent("system", "warn", "Danger Zone Action: Installed tables and configuration cleared.")
+            showToast("Installed tables and configuration cleared.", ToastType.WARNING)
             _currentScreen.value = Screen.SETUP_WIZARD
         }
     }
@@ -313,6 +393,7 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
             )
             repository.updateBrief(updated)
             repository.insertEvent("scheduler", "info", "Approved topic draft: '${existing.topic}' for posting.")
+            showToast("Content brief approved and scheduled!", ToastType.SUCCESS)
         }
     }
 
@@ -324,6 +405,7 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
             val existing = repository.getBriefById(briefId) ?: return@launch
             repository.deleteBriefById(briefId)
             repository.insertEvent("scheduler", "warn", "Deleted calendar slot for Topic: '${existing.topic}'.")
+            showToast("Content brief successfully discarded", ToastType.INFO)
         }
     }
 
@@ -342,6 +424,7 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
             )
             repository.updateBrief(updated)
             repository.insertEvent("scheduler", "info", "Updated brief: '${topic}' manually.")
+            showToast("Content brief updated successfully!", ToastType.SUCCESS)
         }
     }
 
@@ -368,10 +451,12 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
                     .addTag("AetherPublishImmediate")
                     .build()
                 workManager.enqueue(workRequest)
+                showToast("Publishing task dispatched!", ToastType.INFO)
             } catch (e: Exception) {
                 Log.e("AetherViewModel", "Failed to enqueue immediate publication: ${e.localizedMessage}")
                 // Securely notify workspace log
                 repository.insertEvent("publish", "warn", "WorkManager pipeline busy, retrying transaction pool...")
+                showToast("Failed to dispatch publishing task: WorkManager busy", ToastType.ERROR)
             }
         }
     }
@@ -399,6 +484,7 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
             )
             repository.saveSettings(updated)
             repository.insertEvent("system", "info", "Brand parameters updated (Brand Voice: $brandVoice)")
+            showToast("Brand parameters updated successfully!", ToastType.SUCCESS)
         }
     }
 
@@ -418,6 +504,90 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
             )
             repository.insertBrief(brief)
             repository.insertEvent("scheduler", "info", "Created manual content brief: '$topic'")
+            showToast("Manual content brief created successfully!", ToastType.SUCCESS)
+        }
+    }
+
+    /**
+     * Executes an immediate, complete bidirectional sync of content briefs, snapshots, cost entries,
+     * and system event logs with the configured Supabase cloud instance.
+     */
+    fun triggerSupabaseSync() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val settings = repository.getSettingsRaw() ?: return@launch
+            if (!settings.isSetupComplete) {
+                showToast("Please complete the setup wizard first.", ToastType.WARNING)
+                return@launch
+            }
+            val supabaseUrl = settings.supabaseUrl.trim()
+            val supabaseKey = if (settings.serviceRoleKey.trim().isNotEmpty()) settings.serviceRoleKey.trim() else settings.anonKey.trim()
+
+            if (supabaseUrl.isEmpty() || supabaseKey.isEmpty()) {
+                showToast("Supabase is not configured yet.", ToastType.WARNING)
+                return@launch
+            }
+
+            if (_isSyncing.value) return@launch
+            _isSyncing.value = true
+            showToast("Syncing with Supabase backplane...", ToastType.INFO)
+            repository.insertEvent("scheduler", "info", "Manual synchronization triggered by user.")
+
+            try {
+                // A. Pull Remote Briefs
+                val remoteBriefs = com.example.api.SupabaseService.pullBriefs(supabaseUrl, supabaseKey)
+                if (remoteBriefs.isNotEmpty()) {
+                    val localBriefs = repository.allBriefsFlow.first()
+                    val localMap = localBriefs.associateBy { it.id }
+                    
+                    var updatedCount = 0
+                    var insertedCount = 0
+                    for (remote in remoteBriefs) {
+                        val local = localMap[remote.id]
+                        if (local == null) {
+                            repository.insertBrief(remote)
+                            insertedCount++
+                        } else if (local.status != remote.status || local.isApproved != remote.isApproved || local.slotTime != remote.slotTime) {
+                            repository.updateBrief(remote)
+                            updatedCount++
+                        }
+                    }
+                    if (insertedCount > 0 || updatedCount > 0) {
+                        repository.insertEvent("scheduler", "info", "Pulled from Supabase: $insertedCount new briefs, $updatedCount updated briefs.")
+                    }
+                }
+
+                // B. Push Local Briefs
+                val currentBriefs = repository.allBriefsFlow.first()
+                if (currentBriefs.isNotEmpty()) {
+                    com.example.api.SupabaseService.pushBriefs(supabaseUrl, supabaseKey, currentBriefs)
+                }
+
+                // C. Push Local Events
+                val recentEvents = repository.recentEventsFlow.first()
+                if (recentEvents.isNotEmpty()) {
+                    com.example.api.SupabaseService.pushSystemEvents(supabaseUrl, supabaseKey, recentEvents)
+                }
+
+                // D. Push Cost Entries & Snapshots
+                val costEntries = repository.costEntriesFlow.first()
+                if (costEntries.isNotEmpty()) {
+                    com.example.api.SupabaseService.pushCostEntries(supabaseUrl, supabaseKey, costEntries)
+                }
+
+                val snapshots = repository.snapshotsFlow.first()
+                if (snapshots.isNotEmpty()) {
+                    com.example.api.SupabaseService.pushEngagementSnapshots(supabaseUrl, supabaseKey, snapshots)
+                }
+
+                repository.insertEvent("scheduler", "info", "Manual Supabase synchronization completed successfully.")
+                showToast("Successfully synchronized with Supabase!", ToastType.SUCCESS)
+            } catch (e: Exception) {
+                Log.e("AetherViewModel", "Manual sync failed", e)
+                repository.insertEvent("scheduler", "error", "Manual sync failed: ${e.localizedMessage}")
+                showToast("Sync warning: check your internet or Supabase tables.", ToastType.WARNING)
+            } finally {
+                _isSyncing.value = false
+            }
         }
     }
 }

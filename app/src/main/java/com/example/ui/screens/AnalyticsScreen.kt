@@ -28,6 +28,7 @@ import com.example.data.EngagementSnapshot
 import com.example.ui.components.AetherGlassCard
 import com.example.ui.components.LiquidBackground
 import com.example.ui.viewmodel.AetherViewModel
+import com.example.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -54,12 +55,12 @@ fun AnalyticsScreen(viewModel: AetherViewModel) {
                 text = "Performance Maps",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onBackground
             )
             Text(
                 text = "Live analytics from synced Facebook clusters",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.White.copy(alpha = 0.5f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
@@ -79,14 +80,14 @@ fun AnalyticsScreen(viewModel: AetherViewModel) {
                             text = "Analytics Unavailable",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onBackground,
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "Connect your Supabase instance through the setup wizard to securely track and store your content performance analytics.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.6f),
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -98,7 +99,7 @@ fun AnalyticsScreen(viewModel: AetherViewModel) {
             Text(
                 text = "DAILY POST REACH TREND",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.5f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -117,7 +118,7 @@ fun AnalyticsScreen(viewModel: AetherViewModel) {
                     ) {
                         Text(
                             text = "Awaiting first published post to compile charts...",
-                            color = Color.White.copy(alpha = 0.4f),
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
@@ -130,7 +131,7 @@ fun AnalyticsScreen(viewModel: AetherViewModel) {
             Text(
                 text = "AI COMPUTATIONAL EXPENSES",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.5f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -157,20 +158,20 @@ fun AnalyticsScreen(viewModel: AetherViewModel) {
                             CircularProgressIndicator(
                                 progress = { costProgress },
                                 modifier = Modifier.fillMaxSize(),
-                                color = Color(0xFFEC4899),
-                                trackColor = Color(0x12FFFFFF),
+                                color = MaterialTheme.colorScheme.primary,
+                                trackColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f),
                                 strokeWidth = 8.dp
                             )
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
                                     text = "$${"%.3f".format(totalCost)}",
-                                    color = Color.White,
+                                    color = MaterialTheme.colorScheme.onBackground,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold
-                               )
+                                )
                                 Text(
                                     text = "Spent",
-                                    color = Color.White.copy(alpha = 0.4f),
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
                                     fontSize = 9.sp
                                 )
                             }
@@ -179,7 +180,7 @@ fun AnalyticsScreen(viewModel: AetherViewModel) {
                         Text(
                             text = "Daily Limit: $${"%.1f".format(currentSpendCap)}",
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color.White.copy(alpha = 0.6f)
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                         )
                     }
                 }
@@ -199,26 +200,26 @@ fun AnalyticsScreen(viewModel: AetherViewModel) {
                             Text(
                                 text = "Luminous Model Calls",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = Color.White.copy(alpha = 0.5f)
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                             )
                             Text(
                                 text = "${costEntries.size} requests",
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = MaterialTheme.colorScheme.onBackground
                             )
                         }
                         Column {
                             Text(
                                 text = "Aggregated Token Usage",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = Color.White.copy(alpha = 0.5f)
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                             )
                             Text(
                                 text = formatNumber(totalTokens),
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF3B82F6)
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
@@ -229,7 +230,7 @@ fun AnalyticsScreen(viewModel: AetherViewModel) {
             Text(
                 text = "DETAILED EXPENDITURE LEDGER",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.5f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -239,7 +240,7 @@ fun AnalyticsScreen(viewModel: AetherViewModel) {
                     Text(
                         text = "No recorded generative transactions yet.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.4f),
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
                         textAlign = TextAlign.Center,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -259,12 +260,12 @@ fun AnalyticsScreen(viewModel: AetherViewModel) {
                                     text = entry.provider,
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.White
+                                    color = MaterialTheme.colorScheme.onBackground
                                 )
                                 Text(
                                     text = SimpleDateFormat("HH:mm:ss a", Locale.getDefault()).format(Date(entry.timestamp)),
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White.copy(alpha = 0.4f)
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
                                 )
                             }
                             Column(horizontalAlignment = Alignment.End) {
@@ -272,16 +273,16 @@ fun AnalyticsScreen(viewModel: AetherViewModel) {
                                     text = "$${"%.5f".format(entry.estimatedCost)}",
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFFEC4899)
+                                    color = MaterialTheme.colorScheme.primary
                                 )
                                 Text(
                                     text = "In: ${entry.inputTokens} | Out: ${entry.outputTokens}",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White.copy(alpha = 0.4f)
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
                                 )
                             }
                         }
-                        HorizontalDivider(color = Color(0x0AFFFFFF), modifier = Modifier.padding(vertical = 4.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f), modifier = Modifier.padding(vertical = 4.dp))
                     }
                 }
             }
@@ -295,6 +296,10 @@ fun AnalyticsScreen(viewModel: AetherViewModel) {
 @Composable
 fun AnalyticsCustomChart(snapshots: List<EngagementSnapshot>) {
     val maxReach = (snapshots.maxOfOrNull { it.reach } ?: 1000).toFloat()
+    val referenceLineColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val secondaryColor = MaterialTheme.colorScheme.secondary
+    val onBgColor = MaterialTheme.colorScheme.onBackground
     
     Column(
         modifier = Modifier
@@ -318,7 +323,7 @@ fun AnalyticsCustomChart(snapshots: List<EngagementSnapshot>) {
             for (i in 0..lineCount) {
                 val yVal = height * (i.toFloat() / lineCount)
                 drawLine(
-                    color = Color(0x0DFFFFFF),
+                    color = referenceLineColor,
                     start = Offset(0f, yVal),
                     end = Offset(width, yVal),
                     strokeWidth = 1.dp.toPx()
@@ -334,7 +339,7 @@ fun AnalyticsCustomChart(snapshots: List<EngagementSnapshot>) {
                 // Reach Bar (Deep slate glow glassmorphism)
                 drawRoundRect(
                     brush = Brush.verticalGradient(
-                        colors = listOf(Color(0xFF3B82F6), Color(0xFF3B82F6).copy(alpha = 0.2f))
+                        colors = listOf(primaryColor, primaryColor.copy(alpha = 0.2f))
                     ),
                     topLeft = Offset(xPos - barWidth / 2, height - drawnBarHeight),
                     size = Size(barWidth, drawnBarHeight),
@@ -344,7 +349,7 @@ fun AnalyticsCustomChart(snapshots: List<EngagementSnapshot>) {
                 // Secondary Overlay Indicator (Likes Dot Glow)
                 val dotYPos = height - drawnBarHeight - 10.dp.toPx()
                 drawCircle(
-                    color = Color(0xFFEC4899),
+                    color = secondaryColor,
                     radius = 3.dp.toPx(),
                     center = Offset(xPos, dotYPos.coerceAtLeast(4.dp.toPx()))
                 )
@@ -363,7 +368,7 @@ fun AnalyticsCustomChart(snapshots: List<EngagementSnapshot>) {
                     text = snapshot.label,
                     style = MaterialTheme.typography.labelSmall,
                     fontSize = 9.sp,
-                    color = Color.White.copy(alpha = 0.40f),
+                    color = onBgColor.copy(alpha = 0.40f),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.width(36.dp)
                 )
