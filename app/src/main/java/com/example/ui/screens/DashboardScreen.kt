@@ -159,12 +159,11 @@ fun DashboardScreen(viewModel: AetherViewModel) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    listOf("manual", "hybrid", "full_auto").forEach { mode ->
+                    listOf("manual", "hybrid_auto").forEach { mode ->
                         val isSelected = settings?.postingMode == mode
                         val (label, bg, color) = when (mode) {
                             "manual" -> Triple("Manual", Color(0xFFF59E0B), Color.Black)
-                            "hybrid" -> Triple("Hybrid AI", Color(0xFF3B82F6), Color.White)
-                            else -> Triple("Full Auto", Color(0xFFEC4899), Color.White)
+                            else -> Triple("Hybrid Auto", Color(0xFF3B82F6), Color.White)
                         }
 
                         Box(

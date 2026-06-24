@@ -154,6 +154,8 @@ fun ScheduleScreen(viewModel: AetherViewModel) {
         // Add custom slot dialog
         if (showAddDialog) {
             var newImageUrl by remember { mutableStateOf("") }
+            var newSlotTime by remember { mutableStateOf(System.currentTimeMillis() + 86400000L) } // Next day
+            val context = androidx.compose.ui.platform.LocalContext.current
             val photoPickerLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
                 androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia()
             ) { uri ->
@@ -188,6 +190,37 @@ fun ScheduleScreen(viewModel: AetherViewModel) {
                             placeholder = "tech,design,aesthetics"
                         )
                         Spacer(modifier = Modifier.height(16.dp))
+                        Text("Scheduled Date & Time", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedButton(
+                            onClick = {
+                                val calendar = java.util.Calendar.getInstance().apply { timeInMillis = newSlotTime }
+                                android.app.DatePickerDialog(
+                                    context,
+                                    { _, year, month, dayOfMonth ->
+                                        android.app.TimePickerDialog(
+                                            context,
+                                            { _, hourOfDay, minute ->
+                                                val newCal = java.util.Calendar.getInstance().apply {
+                                                    set(year, month, dayOfMonth, hourOfDay, minute)
+                                                }
+                                                newSlotTime = newCal.timeInMillis
+                                            },
+                                            calendar.get(java.util.Calendar.HOUR_OF_DAY),
+                                            calendar.get(java.util.Calendar.MINUTE),
+                                            false
+                                        ).show()
+                                    },
+                                    calendar.get(java.util.Calendar.YEAR),
+                                    calendar.get(java.util.Calendar.MONTH),
+                                    calendar.get(java.util.Calendar.DAY_OF_MONTH)
+                                ).show()
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(SimpleDateFormat("EEE hh:mm a (MMM dd, yyyy)", Locale.getDefault()).format(Date(newSlotTime)))
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
                         Text("Media", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
                         Spacer(modifier = Modifier.height(4.dp))
                         OutlinedButton(
@@ -206,7 +239,7 @@ fun ScheduleScreen(viewModel: AetherViewModel) {
                     Button(
                         onClick = {
                             if (newTopic.isNotEmpty()) {
-                                viewModel.insertNewManualBrief(newTopic, newCaption, newHashtags, newImageUrl)
+                                viewModel.insertNewManualBrief(newTopic, newCaption, newHashtags, newImageUrl, newSlotTime)
                                 showAddDialog = false
                             }
                         },
@@ -224,6 +257,8 @@ fun ScheduleScreen(viewModel: AetherViewModel) {
             var editCaption by remember { mutableStateOf(brief.caption) }
             var editHashtags by remember { mutableStateOf(brief.hashtags) }
             var editImageUrl by remember { mutableStateOf(brief.imageUrl) }
+            var editSlotTime by remember { mutableStateOf(brief.slotTime) }
+            val context = androidx.compose.ui.platform.LocalContext.current
             
             val photoPickerLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
                 androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia()
@@ -259,6 +294,37 @@ fun ScheduleScreen(viewModel: AetherViewModel) {
                             placeholder = "hashtags"
                         )
                         Spacer(modifier = Modifier.height(16.dp))
+                        Text("Scheduled Date & Time", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedButton(
+                            onClick = {
+                                val calendar = java.util.Calendar.getInstance().apply { timeInMillis = editSlotTime }
+                                android.app.DatePickerDialog(
+                                    context,
+                                    { _, year, month, dayOfMonth ->
+                                        android.app.TimePickerDialog(
+                                            context,
+                                            { _, hourOfDay, minute ->
+                                                val newCal = java.util.Calendar.getInstance().apply {
+                                                    set(year, month, dayOfMonth, hourOfDay, minute)
+                                                }
+                                                editSlotTime = newCal.timeInMillis
+                                            },
+                                            calendar.get(java.util.Calendar.HOUR_OF_DAY),
+                                            calendar.get(java.util.Calendar.MINUTE),
+                                            false
+                                        ).show()
+                                    },
+                                    calendar.get(java.util.Calendar.YEAR),
+                                    calendar.get(java.util.Calendar.MONTH),
+                                    calendar.get(java.util.Calendar.DAY_OF_MONTH)
+                                ).show()
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(SimpleDateFormat("EEE hh:mm a (MMM dd, yyyy)", Locale.getDefault()).format(Date(editSlotTime)))
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
                         Text("Media", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
                         Spacer(modifier = Modifier.height(4.dp))
                         OutlinedButton(
@@ -281,7 +347,8 @@ fun ScheduleScreen(viewModel: AetherViewModel) {
                                 topic = editTopic,
                                 caption = editCaption,
                                 hashtags = editHashtags,
-                                imageUrl = editImageUrl
+                                imageUrl = editImageUrl,
+                                slotTime = editSlotTime
                             )
                             briefToEdit = null
                         },

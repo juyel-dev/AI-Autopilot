@@ -34,13 +34,15 @@ data class SetupProgressState(
 
 class AetherViewModel(application: Application) : AndroidViewModel(application) {
 
+    private val secureStorage = SecureStorage(application)
     private val database = AppDatabase.getDatabase(application)
     private val repository = AetherRepository(
         database.appSettingsDao(),
         database.contentBriefDao(),
         database.systemEventDao(),
         database.costEntryDao(),
-        database.engagementSnapshotDao()
+        database.engagementSnapshotDao(),
+        secureStorage
     )
 
     // Current Navigation Screen
@@ -192,44 +194,34 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch(Dispatchers.IO) {
             _setupState.value = SetupProgressState(
                 isRunning = true,
-                progress = 0.05f,
-                statusText = "Starting Aether Engine...",
-                logMessages = listOf("Booting provisioning environment...", "Connecting local gateway...")
+                progress = 0.10f,
+                statusText = "Validating Configuration...",
+                logMessages = listOf("Checking connectivity...")
             )
-            delay(800)
 
-            // Step 1: Validating credentials and pinging endpoints
-            addSetupLog("Step 1: Testing Supabase Project Connectivity...")
-            _setupState.update { it.copy(progress = 0.20f, statusText = "Verifying Supabase...") }
+            // Validating credentials and pinging endpoints
+            addSetupLog("Testing Supabase Project Connectivity...")
             val supabaseRes = com.example.api.ConnectivityService.testSupabase(supabaseUrl, anonKey)
-            if (!supabaseRes.isSuccess && supabaseUrl.isNotEmpty()) {
-                addSetupLog("⚠️ Warn: Supabase handshake returned error: ${supabaseRes.message}")
+            if (!supabaseRes.isSuccess) {
+                addSetupLog("❌ Setup Failed: Supabase handshake returned error: ${supabaseRes.message}")
+                _setupState.update { it.copy(isRunning = false, statusText = "Failed", progress = 1f) }
+                return@launch
             } else {
-                addSetupLog("✅ Supabase REST Node successfully verified.")
+                addSetupLog("✅ Supabase successfully verified.")
             }
-            delay(500)
+            _setupState.update { it.copy(progress = 0.50f) }
 
-            // Step 2: Testing AI Keys
-            addSetupLog("Step 2: Authenticating AI Provider Credentials...")
-            _setupState.update { it.copy(progress = 0.40f, statusText = "Evaluating AI model pathways...") }
-            val aiRes = com.example.api.ConnectivityService.testMainAI(aiProvider, aiBaseUrl, aiModel, aiApiKey)
-            if (!aiRes.isSuccess && aiApiKey.isNotEmpty()) {
-                addSetupLog("⚠️ Warn: AI handshake failed: ${aiRes.message}")
-            } else {
-                addSetupLog("✅ Provider handshakes established.")
-                addSetupLog("✅ Model compatibility checked ($aiModel resolved successfully).")
+            if (aiApiKey.isNotEmpty()) {
+                addSetupLog("Testing AI Provider Credentials...")
+                val aiRes = com.example.api.ConnectivityService.testMainAI(aiProvider, aiBaseUrl, aiModel, aiApiKey)
+                if (!aiRes.isSuccess) {
+                    addSetupLog("⚠️ Warn: AI handshake failed: ${aiRes.message}")
+                } else {
+                    addSetupLog("✅ AI Provider verified.")
+                }
             }
-            delay(500)
 
-            // Step 3: Initializing Schema
-            addSetupLog("Step 3: Creating and Migrating Distributed Tables...")
-            _setupState.update { it.copy(progress = 0.60f, statusText = "Building indices and RLS boundaries...") }
-            delay(800)
-            addSetupLog("✅ Table 'app_settings' migrated (version 2).")
-            addSetupLog("✅ Table 'content_briefs' synchronized.")
-            addSetupLog("✅ Table 'system_events' table-level bypass declared.")
-            addSetupLog("✅ Table 'cost_entries' and performance maps initialized.")
-            delay(500)
+            _setupState.update { it.copy(progress = 0.80f, statusText = "Saving Configuration...") }
 
             // Pre-save AppSettings so the schedule generation can reference them
             repository.clearAllBriefs()
@@ -261,16 +253,11 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
             )
             repository.saveSettings(currentSettings)
 
-            // Step 4: Finalizing secrets configuration in Vault
-            addSetupLog("Step 4: Enshrouding tokens to local secure Vault...")
-            _setupState.update { it.copy(progress = 0.95f, statusText = "Encrypting assets...") }
-            delay(800)
-
             repository.insertEvent("system", "info", "Aether self-hosted installer completed with 100% success.")
 
             addSetupLog("🎉 SETUP FULLY COMPLETE! Welcome to Aether AI.")
             _setupState.update { it.copy(progress = 1.0f, statusText = "Finalized!") }
-            delay(800)
+            delay(500)
 
             _setupState.update { SetupProgressState() } // Reset progress state
             _currentScreen.value = Screen.DASHBOARD
@@ -343,14 +330,15 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
     /**
      * Edits a content brief with manual adjustments.
      */
-    fun updateBriefManually(id: Long, topic: String, caption: String, hashtags: String, imageUrl: String) {
+    fun updateBriefManually(id: Long, topic: String, caption: String, hashtags: String, imageUrl: String, slotTime: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             val existing = repository.getBriefById(id) ?: return@launch
             val updated = existing.copy(
                 topic = topic,
                 caption = caption,
                 hashtags = hashtags,
-                imageUrl = imageUrl.ifBlank { existing.imageUrl }
+                imageUrl = imageUrl.ifBlank { existing.imageUrl },
+                slotTime = slotTime
             )
             repository.updateBrief(updated)
             repository.insertEvent("scheduler", "info", "Updated brief: '${topic}' manually.")
@@ -417,11 +405,10 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
     /**
      * Manually generates a new brief row in the scheduler.
      */
-    fun insertNewManualBrief(topic: String, caption: String, hashtags: String, imageUrl: String) {
+    fun insertNewManualBrief(topic: String, caption: String, hashtags: String, imageUrl: String, slotTime: Long) {
         viewModelScope.launch(Dispatchers.IO) {
-            val now = System.currentTimeMillis()
             val brief = ContentBrief(
-                slotTime = now + (24 * 60 * 60 * 1000L), // Next day
+                slotTime = slotTime,
                 topic = topic,
                 caption = caption,
                 hashtags = hashtags,

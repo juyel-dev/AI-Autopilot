@@ -46,6 +46,7 @@ fun SettingsScreen(viewModel: AetherViewModel) {
     var aiModel by remember { mutableStateOf(currentSettings.aiModel) }
 
     var showSecretsBlock by remember { mutableStateOf(false) }
+    var showPasswords by remember { mutableStateOf(false) }
     var showResetVerify by remember { mutableStateOf(false) }
 
     // Sync settings if they change remotely
@@ -214,35 +215,50 @@ fun SettingsScreen(viewModel: AetherViewModel) {
                         value = anonKey,
                         onValueChange = { anonKey = it },
                         label = "Supabase Anon Key",
-                        placeholder = "eyJhbG..."
+                        placeholder = "eyJhbG...",
+                        isSecret = true,
+                        showSecret = showPasswords,
+                        onToggleSecret = { showPasswords = !showPasswords }
                     )
 
                     WizardTextField(
                         value = serviceRoleKey,
                         onValueChange = { serviceRoleKey = it },
                         label = "Supabase Service Role Bypass",
-                        placeholder = "eyJhbG..."
+                        placeholder = "eyJhbG...",
+                        isSecret = true,
+                        showSecret = showPasswords,
+                        onToggleSecret = { showPasswords = !showPasswords }
                     )
 
                     WizardTextField(
                         value = patKey,
                         onValueChange = { patKey = it },
                         label = "Personal Access Token",
-                        placeholder = "sbp_..."
+                        placeholder = "sbp_...",
+                        isSecret = true,
+                        showSecret = showPasswords,
+                        onToggleSecret = { showPasswords = !showPasswords }
                     )
 
                     WizardTextField(
                         value = facebookToken,
                         onValueChange = { facebookToken = it },
                         label = "Facebook Access Token",
-                        placeholder = "EAAW..."
+                        placeholder = "EAAW...",
+                        isSecret = true,
+                        showSecret = showPasswords,
+                        onToggleSecret = { showPasswords = !showPasswords }
                     )
 
                     WizardTextField(
                         value = aiApiKey,
                         onValueChange = { aiApiKey = it },
                         label = "AI Generative Key (Gemini API / Open AI)",
-                        placeholder = "AI API Key"
+                        placeholder = "AI API Key",
+                        isSecret = true,
+                        showSecret = showPasswords,
+                        onToggleSecret = { showPasswords = !showPasswords }
                     )
 
                     WizardTextField(
