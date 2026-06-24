@@ -208,7 +208,8 @@ fun SettingsScreen(viewModel: AetherViewModel) {
                         value = supabaseUrl,
                         onValueChange = { supabaseUrl = it },
                         label = "Supabase API Endpoint",
-                        placeholder = "https://your-ref.supabase.co"
+                        placeholder = "https://your-ref.supabase.co",
+                        errorMessage = if (supabaseUrl.isNotEmpty() && !com.example.util.ValidationUtils.isValidUrl(supabaseUrl)) "Invalid URL format" else null
                     )
 
                     WizardTextField(
@@ -218,7 +219,8 @@ fun SettingsScreen(viewModel: AetherViewModel) {
                         placeholder = "eyJhbG...",
                         isSecret = true,
                         showSecret = showPasswords,
-                        onToggleSecret = { showPasswords = !showPasswords }
+                        onToggleSecret = { showPasswords = !showPasswords },
+                        errorMessage = if (anonKey.isNotEmpty() && !com.example.util.ValidationUtils.isValidSupabaseKey(anonKey)) "Invalid Anon Key" else null
                     )
 
                     WizardTextField(
@@ -228,7 +230,8 @@ fun SettingsScreen(viewModel: AetherViewModel) {
                         placeholder = "eyJhbG...",
                         isSecret = true,
                         showSecret = showPasswords,
-                        onToggleSecret = { showPasswords = !showPasswords }
+                        onToggleSecret = { showPasswords = !showPasswords },
+                        errorMessage = if (serviceRoleKey.isNotEmpty() && !com.example.util.ValidationUtils.isValidSupabaseKey(serviceRoleKey)) "Invalid Service Role Key" else null
                     )
 
                     WizardTextField(
@@ -238,7 +241,8 @@ fun SettingsScreen(viewModel: AetherViewModel) {
                         placeholder = "sbp_...",
                         isSecret = true,
                         showSecret = showPasswords,
-                        onToggleSecret = { showPasswords = !showPasswords }
+                        onToggleSecret = { showPasswords = !showPasswords },
+                        errorMessage = if (patKey.isNotEmpty() && patKey.length < 10) "Token is too short" else null
                     )
 
                     WizardTextField(
@@ -248,7 +252,8 @@ fun SettingsScreen(viewModel: AetherViewModel) {
                         placeholder = "EAAW...",
                         isSecret = true,
                         showSecret = showPasswords,
-                        onToggleSecret = { showPasswords = !showPasswords }
+                        onToggleSecret = { showPasswords = !showPasswords },
+                        errorMessage = if (facebookToken.isNotEmpty() && !com.example.util.ValidationUtils.isValidFacebookToken(facebookToken)) "Invalid Facebook Token" else null
                     )
 
                     WizardTextField(
@@ -258,35 +263,49 @@ fun SettingsScreen(viewModel: AetherViewModel) {
                         placeholder = "AI API Key",
                         isSecret = true,
                         showSecret = showPasswords,
-                        onToggleSecret = { showPasswords = !showPasswords }
+                        onToggleSecret = { showPasswords = !showPasswords },
+                        errorMessage = if (aiApiKey.isNotEmpty() && !com.example.util.ValidationUtils.isValidOpenAiKey(aiApiKey)) "Invalid AI API Key" else null
                     )
 
                     WizardTextField(
                         value = aiModel,
                         onValueChange = { aiModel = it },
                         label = "Model Registry Identifier",
-                        placeholder = "gemini-3.5-flash"
+                        placeholder = "gemini-3.5-flash",
+                        errorMessage = if (aiModel.isBlank()) "Model cannot be empty" else null
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    val hasErrors = listOf(
+                        supabaseUrl.isNotEmpty() && !com.example.util.ValidationUtils.isValidUrl(supabaseUrl),
+                        anonKey.isNotEmpty() && !com.example.util.ValidationUtils.isValidSupabaseKey(anonKey),
+                        serviceRoleKey.isNotEmpty() && !com.example.util.ValidationUtils.isValidSupabaseKey(serviceRoleKey),
+                        patKey.isNotEmpty() && patKey.length < 10,
+                        facebookToken.isNotEmpty() && !com.example.util.ValidationUtils.isValidFacebookToken(facebookToken),
+                        aiApiKey.isNotEmpty() && !com.example.util.ValidationUtils.isValidOpenAiKey(aiApiKey),
+                        aiModel.isBlank()
+                    ).any { it }
+
                     Button(
                         onClick = {
-                            // Custom rotate / save key function triggered directly inside model mapping
-                            viewModel.saveIncrementalSettings {
-                                it.copy(
-                                    supabaseUrl = supabaseUrl,
-                                    anonKey = anonKey,
-                                    serviceRoleKey = serviceRoleKey,
-                                    patKey = patKey,
-                                    facebookToken = facebookToken,
-                                    aiApiKey = aiApiKey,
-                                    aiModel = aiModel
-                                )
+                            if (!hasErrors) {
+                                viewModel.saveIncrementalSettings {
+                                    it.copy(
+                                        supabaseUrl = supabaseUrl,
+                                        anonKey = anonKey,
+                                        serviceRoleKey = serviceRoleKey,
+                                        patKey = patKey,
+                                        facebookToken = facebookToken,
+                                        aiApiKey = aiApiKey,
+                                        aiModel = aiModel
+                                    )
+                                }
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981))
+                        colors = ButtonDefaults.buttonColors(containerColor = if (hasErrors) Color.Gray else Color(0xFF10B981)),
+                        enabled = !hasErrors
                     ) {
                         Text("Save Secrets")
                     }

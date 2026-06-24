@@ -275,7 +275,8 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     value = supabaseUrl,
                                     onValueChange = { supabaseUrl = it },
                                     label = "Supabase project URL",
-                                    placeholder = "https://xxx.supabase.co"
+                                    placeholder = "https://xxx.supabase.co",
+                                    errorMessage = if (supabaseUrl.isNotEmpty() && !com.example.util.ValidationUtils.isValidUrl(supabaseUrl)) "Invalid URL format" else null
                                 )
 
                                 WizardTextField(
@@ -285,7 +286,8 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     placeholder = "eyJhbGciOi...",
                                     isSecret = true,
                                     showSecret = showSecrets,
-                                    onToggleSecret = { showSecrets = !showSecrets }
+                                    onToggleSecret = { showSecrets = !showSecrets },
+                                    errorMessage = if (anonKey.isNotEmpty() && !com.example.util.ValidationUtils.isValidSupabaseKey(anonKey)) "Invalid Anon Key" else null
                                 )
 
                                 WizardTextField(
@@ -295,7 +297,8 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     placeholder = "eyJhbG...",
                                     isSecret = true,
                                     showSecret = showSecrets,
-                                    onToggleSecret = { showSecrets = !showSecrets }
+                                    onToggleSecret = { showSecrets = !showSecrets },
+                                    errorMessage = if (serviceRoleKey.isNotEmpty() && !com.example.util.ValidationUtils.isValidSupabaseKey(serviceRoleKey)) "Invalid Service Role Key" else null
                                 )
 
                                 WizardTextField(
@@ -305,7 +308,8 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     placeholder = "sbp_...",
                                     isSecret = true,
                                     showSecret = showSecrets,
-                                    onToggleSecret = { showSecrets = !showSecrets }
+                                    onToggleSecret = { showSecrets = !showSecrets },
+                                    errorMessage = if (patKey.isNotEmpty() && patKey.length < 10) "Token is too short" else null
                                 )
 
                                 Spacer(modifier = Modifier.height(16.dp))
@@ -326,6 +330,13 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     }
                                 }
 
+                                val step1Errors = listOf(
+                                    supabaseUrl.isNotEmpty() && !com.example.util.ValidationUtils.isValidUrl(supabaseUrl),
+                                    anonKey.isNotEmpty() && !com.example.util.ValidationUtils.isValidSupabaseKey(anonKey),
+                                    serviceRoleKey.isNotEmpty() && !com.example.util.ValidationUtils.isValidSupabaseKey(serviceRoleKey),
+                                    patKey.isNotEmpty() && patKey.length < 10
+                                ).any { it }
+
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -333,7 +344,8 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     Button(
                                         onClick = { viewModel.testSupabaseConnection(supabaseUrl, anonKey) },
                                         modifier = Modifier.weight(1f),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4B5563))
+                                        colors = ButtonDefaults.buttonColors(containerColor = if (step1Errors) Color.Gray else Color(0xFF4B5563)),
+                                        enabled = !step1Errors
                                     ) {
                                         Text("Test", fontWeight = FontWeight.Bold)
                                     }
@@ -351,7 +363,8 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                             currentStep = 2
                                         },
                                         modifier = Modifier.weight(1.5f),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))
+                                        colors = ButtonDefaults.buttonColors(containerColor = if (step1Errors) Color.Gray else Color(0xFF3B82F6)),
+                                        enabled = !step1Errors
                                     ) {
                                         Text("Save & continue", fontWeight = FontWeight.Bold)
                                     }
@@ -379,7 +392,8 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     value = facebookPageId,
                                     onValueChange = { facebookPageId = it },
                                     label = "Facebook Page ID",
-                                    placeholder = "e.g. 10459746237..."
+                                    placeholder = "e.g. 10459746237...",
+                                    errorMessage = if (facebookPageId.isNotEmpty() && !facebookPageId.all { char -> char.isDigit() }) "Page ID should contain only numbers" else null
                                 )
 
                                 WizardTextField(
@@ -389,7 +403,8 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     placeholder = "EAAW...",
                                     isSecret = true,
                                     showSecret = showSecrets,
-                                    onToggleSecret = { showSecrets = !showSecrets }
+                                    onToggleSecret = { showSecrets = !showSecrets },
+                                    errorMessage = if (facebookToken.isNotEmpty() && !com.example.util.ValidationUtils.isValidFacebookToken(facebookToken)) "Invalid Facebook Token" else null
                                 )
 
                                 Spacer(modifier = Modifier.height(16.dp))
@@ -409,6 +424,11 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     }
                                 }
 
+                                val step2Errors = listOf(
+                                    facebookPageId.isNotEmpty() && !facebookPageId.all { char -> char.isDigit() },
+                                    facebookToken.isNotEmpty() && !com.example.util.ValidationUtils.isValidFacebookToken(facebookToken)
+                                ).any { it }
+
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -416,7 +436,8 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     Button(
                                         onClick = { viewModel.testFacebookConnection(facebookToken, facebookPageId) },
                                         modifier = Modifier.weight(1f),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4B5563))
+                                        colors = ButtonDefaults.buttonColors(containerColor = if (step2Errors) Color.Gray else Color(0xFF4B5563)),
+                                        enabled = !step2Errors
                                     ) {
                                         Text("Test", fontWeight = FontWeight.Bold)
                                     }
@@ -432,7 +453,8 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                             currentStep = 3
                                         },
                                         modifier = Modifier.weight(1.5f),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))
+                                        colors = ButtonDefaults.buttonColors(containerColor = if (step2Errors) Color.Gray else Color(0xFF3B82F6)),
+                                        enabled = !step2Errors
                                     ) {
                                         Text("Save & continue", fontWeight = FontWeight.Bold)
                                     }
@@ -488,14 +510,16 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     value = aiBaseUrl,
                                     onValueChange = { aiBaseUrl = it },
                                     label = "Base URL",
-                                    placeholder = "e.g. https://api.openai.com/v1"
+                                    placeholder = "e.g. https://api.openai.com/v1",
+                                    errorMessage = if (aiBaseUrl.isNotEmpty() && !com.example.util.ValidationUtils.isValidUrl(aiBaseUrl)) "Invalid URL format" else null
                                 )
 
                                 WizardTextField(
                                     value = aiModel,
                                     onValueChange = { aiModel = it },
                                     label = "Model Name/ID",
-                                    placeholder = "e.g. gpt-4o-mini or gemini-2.5-flash"
+                                    placeholder = "e.g. gpt-4o-mini or gemini-2.5-flash",
+                                    errorMessage = if (aiModel.isBlank()) "Model cannot be empty" else null
                                 )
 
                                 WizardTextField(
@@ -505,7 +529,8 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     placeholder = "sk-xxx...",
                                     isSecret = true,
                                     showSecret = showSecrets,
-                                    onToggleSecret = { showSecrets = !showSecrets }
+                                    onToggleSecret = { showSecrets = !showSecrets },
+                                    errorMessage = if (aiApiKey.isNotEmpty() && !com.example.util.ValidationUtils.isValidOpenAiKey(aiApiKey)) "Invalid AI API Key" else null
                                 )
 
                                 Spacer(modifier = Modifier.height(16.dp))
@@ -525,6 +550,12 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     }
                                 }
 
+                                val step3Errors = listOf(
+                                    aiBaseUrl.isNotEmpty() && !com.example.util.ValidationUtils.isValidUrl(aiBaseUrl),
+                                    aiModel.isBlank(),
+                                    aiApiKey.isNotEmpty() && !com.example.util.ValidationUtils.isValidOpenAiKey(aiApiKey)
+                                ).any { it }
+
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -532,7 +563,8 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     Button(
                                         onClick = { viewModel.testMainAIConnection(aiProvider, aiBaseUrl, aiModel, aiApiKey) },
                                         modifier = Modifier.weight(1f),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4B5563))
+                                        colors = ButtonDefaults.buttonColors(containerColor = if (step3Errors) Color.Gray else Color(0xFF4B5563)),
+                                        enabled = !step3Errors
                                     ) {
                                         Text("Test endpoint", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                                     }
@@ -550,7 +582,8 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                             currentStep = 4
                                         },
                                         modifier = Modifier.weight(1.3f),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))
+                                        colors = ButtonDefaults.buttonColors(containerColor = if (step3Errors) Color.Gray else Color(0xFF3B82F6)),
+                                        enabled = !step3Errors
                                     ) {
                                         Text("Save continue", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                                     }
@@ -605,14 +638,16 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     value = imageBaseUrl,
                                     onValueChange = { imageBaseUrl = it },
                                     label = "Base URL",
-                                    placeholder = "e.g. https://image.pollinations.ai"
+                                    placeholder = "e.g. https://image.pollinations.ai",
+                                    errorMessage = if (imageBaseUrl.isNotEmpty() && !com.example.util.ValidationUtils.isValidUrl(imageBaseUrl)) "Invalid URL format" else null
                                 )
 
                                 WizardTextField(
                                     value = imageModel,
                                     onValueChange = { imageModel = it },
                                     label = "Model Name",
-                                    placeholder = "e.g. flux, flux-realism, dall-e-3"
+                                    placeholder = "e.g. flux, flux-realism, dall-e-3",
+                                    errorMessage = if (imageModel.isBlank()) "Model cannot be empty" else null
                                 )
 
                                 WizardTextField(
@@ -622,7 +657,8 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     placeholder = "sk-xxx... (Not required for Pollinations)",
                                     isSecret = true,
                                     showSecret = showSecrets,
-                                    onToggleSecret = { showSecrets = !showSecrets }
+                                    onToggleSecret = { showSecrets = !showSecrets },
+                                    errorMessage = if (imageApiKey.isNotEmpty() && imageProvider == "openai_compatible" && !com.example.util.ValidationUtils.isValidOpenAiKey(imageApiKey)) "Invalid API Key" else null
                                 )
 
                                 Spacer(modifier = Modifier.height(16.dp))
@@ -642,6 +678,12 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     }
                                 }
 
+                                val step4Errors = listOf(
+                                    imageBaseUrl.isNotEmpty() && !com.example.util.ValidationUtils.isValidUrl(imageBaseUrl),
+                                    imageModel.isBlank(),
+                                    imageApiKey.isNotEmpty() && imageProvider == "openai_compatible" && !com.example.util.ValidationUtils.isValidOpenAiKey(imageApiKey)
+                                ).any { it }
+
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -649,7 +691,8 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     Button(
                                         onClick = { viewModel.testImageAIConnection(imageProvider, imageBaseUrl, imageModel, imageApiKey) },
                                         modifier = Modifier.weight(1f),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4B5563))
+                                        colors = ButtonDefaults.buttonColors(containerColor = if (step4Errors) Color.Gray else Color(0xFF4B5563)),
+                                        enabled = !step4Errors
                                     ) {
                                         Text("Test endpoint", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                                     }
@@ -667,7 +710,8 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                             currentStep = 5
                                         },
                                         modifier = Modifier.weight(1.3f),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))
+                                        colors = ButtonDefaults.buttonColors(containerColor = if (step4Errors) Color.Gray else Color(0xFF3B82F6)),
+                                        enabled = !step4Errors
                                     ) {
                                         Text("Save continue", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                                     }
@@ -687,7 +731,8 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     value = projectName,
                                     onValueChange = { projectName = it },
                                     label = "Brand / Project Name",
-                                    placeholder = "e.g. Aether Space"
+                                    placeholder = "e.g. Aether Space",
+                                    errorMessage = if (projectName.isBlank()) "Project name cannot be empty" else null
                                 )
 
                                 WizardTextField(
@@ -786,6 +831,12 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
 
                                 Spacer(modifier = Modifier.height(24.dp))
 
+                                val step5Errors = listOf(
+                                    projectName.isBlank(),
+                                    postFrequency.toIntOrNull() == null || (postFrequency.toIntOrNull() ?: 0) < 1,
+                                    dailySpendCap.toDoubleOrNull() == null || (dailySpendCap.toDoubleOrNull() ?: 0.0) < 0.0
+                                ).any { it }
+
                                 Button(
                                     onClick = {
                                         viewModel.executeAutoSetup(
@@ -817,7 +868,8 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                         .fillMaxWidth()
                                         .height(56.dp)
                                         .clip(RoundedCornerShape(14.dp)),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC4899))
+                                    colors = ButtonDefaults.buttonColors(containerColor = if (step5Errors) Color.Gray else Color(0xFFEC4899)),
+                                    enabled = !step5Errors
                                 ) {
                                     Text(
                                         text = "RUN SETUP",
@@ -844,7 +896,8 @@ fun WizardTextField(
     placeholder: String,
     isSecret: Boolean = false,
     showSecret: Boolean = false,
-    onToggleSecret: (() -> Unit)? = null
+    onToggleSecret: (() -> Unit)? = null,
+    errorMessage: String? = null
 ) {
     Column(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
         Text(
@@ -860,6 +913,7 @@ fun WizardTextField(
             modifier = Modifier.fillMaxWidth(),
             maxLines = 1,
             singleLine = true,
+            isError = errorMessage != null,
             placeholder = { Text(text = placeholder, color = Color.White.copy(alpha = 0.25f)) },
             visualTransformation = if (isSecret && !showSecret) PasswordVisualTransformation() else VisualTransformation.None,
             trailingIcon = {
@@ -878,11 +932,20 @@ fun WizardTextField(
                 unfocusedTextColor = Color.White,
                 focusedBorderColor = Color(0xFF3B82F6),
                 unfocusedBorderColor = Color(0x33FFFFFF),
+                errorBorderColor = MaterialTheme.colorScheme.error,
                 focusedContainerColor = Color(0x0AFFFFFF),
                 unfocusedContainerColor = Color(0x05FFFFFF),
                 focusedLabelColor = Color(0xFF3B82F6)
             ),
             shape = RoundedCornerShape(10.dp)
         )
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp, start = 4.dp)
+            )
+        }
     }
 }
