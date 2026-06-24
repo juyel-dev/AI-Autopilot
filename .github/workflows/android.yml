@@ -1,0 +1,98 @@
+name: Android CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main", "master", "dev/**" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build & Compile Android App
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Create .env from .env.example
+        run: |
+          if [ -f .env.example ]; then
+            cp .env.example .env
+          else
+            echo "No .env.example found, creating empty .env"
+            touch .env
+          fi
+
+      - name: Decode Debug Keystore
+        run: |
+          if [ -f debug.keystore.base64 ]; then
+            echo "Decoding debug.keystore from base64..."
+            base64 -d debug.keystore.base64 > debug.keystore
+          elif [ -f app/debug.keystore.base64 ]; then
+            echo "Decoding app debug.keystore from base64..."
+            base64 -d app/debug.keystore.base64 > debug.keystore
+          else
+            echo "No debug.keystore.base64 found, generating a new debug keystore..."
+            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      - name: Grant Execute Permission to Gradlew
+        run: chmod +x gradlew
+
+      - name: Clean Gradle Cache & Build Debug APK
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Find and Copy Compiled APK
+        run: |
+          mkdir -p build-artifacts
+          if [ -f apk/AetherEngine-debug.apk ]; then
+            cp apk/AetherEngine-debug.apk build-artifacts/
+          elif [ -f app/build/outputs/apk/debug/app-debug.apk ]; then
+            cp app/build/outputs/apk/debug/app-debug.apk build-artifacts/AetherEngine-debug.apk
+          else
+            echo "Searching for any compiled APKs..."
+            find . -name "*.apk" -exec cp {} build-artifacts/ \;
+          fi
+
+      - name: Upload Debug APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AetherEngine-debug-apk
+          path: build-artifacts/
+          retention-days: 7
+
+      - name: Create GitHub Release (On Version Tag Push)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build-artifacts/*.apk
+          name: Release ${{ github.ref_name }}
+          body: |
+            Automated Release for version ${{ github.ref_name }}
+            
+            This release contains the latest Compiled Debug APK.
+            
+            ### Artifacts Included
+            * **AetherEngine-debug.apk** (Android Debug Build)
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
