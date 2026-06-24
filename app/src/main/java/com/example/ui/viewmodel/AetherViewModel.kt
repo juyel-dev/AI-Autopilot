@@ -232,24 +232,9 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
             addSetupLog("✅ Table 'cost_entries' and performance maps initialized.")
             delay(500)
 
-            // Step 4: Generating initial rolling schedule
-            addSetupLog("Step 4: Compiling Initial rolling schedule & Mock stats...")
-            _setupState.update { it.copy(progress = 0.80f, statusText = "Generating content briefs...") }
-            delay(1000)
-
-            val pageTopic = if (brandTopics.isNotBlank()) brandTopics else "Tech Innovations & Design Aesthetics"
-            populateDefaultSchedule(pageTopic = pageTopic)
-            populateDefaultStatistics()
-
-            addSetupLog("✅ 7-day calendar window designed & seeded successfully with real niches.")
-            addSetupLog("✅ Performance prediction index calculated.")
-            delay(600)
-
-            // Step 5: Finalizing secrets configuration in Vault
-            addSetupLog("Step 5: Enshrouding tokens to local secure Vault...")
-            _setupState.update { it.copy(progress = 0.95f, statusText = "Encrypting assets...") }
-            delay(800)
-
+            // Pre-save AppSettings so the schedule generation can reference them
+            repository.clearAllBriefs()
+            repository.clearSnapshots()
             val currentSettings = AppSettings(
                 projectName = projectName,
                 supabaseUrl = supabaseUrl,
@@ -276,6 +261,12 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
                 isSetupComplete = true
             )
             repository.saveSettings(currentSettings)
+
+            // Step 4: Finalizing secrets configuration in Vault
+            addSetupLog("Step 4: Enshrouding tokens to local secure Vault...")
+            _setupState.update { it.copy(progress = 0.95f, statusText = "Encrypting assets...") }
+            delay(800)
+
             repository.insertEvent("system", "info", "Aether self-hosted installer completed with 100% success.")
 
             addSetupLog("🎉 SETUP FULLY COMPLETE! Welcome to Aether AI.")
@@ -309,36 +300,6 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
             repository.insertEvent("system", "warn", "Danger Zone Action: Installed tables and configuration cleared.")
             _currentScreen.value = Screen.SETUP_WIZARD
         }
-    }
-
-    /**
-     * Seeds initial 3 rolling schedule slots as pure future drafts for the user to select and approve
-     */
-    private suspend fun populateDefaultSchedule(pageTopic: String) {
-        val now = System.currentTimeMillis()
-        val oneDay = 24 * 60 * 60 * 1000L // 24 hours interval for slots
-
-        repository.clearAllBriefs()
-
-        for (i in 0 until 3) {
-            val slotTime = now + ((i + 1) * oneDay) + (Random.nextInt(1, 4) * 60 * 60 * 1000L)
-            val baseBrief = GeminiAIService.generateLocalBrief(
-                pageTopic = pageTopic,
-                brandVoice = "Tech Visionary",
-                audience = "Creators",
-                slotTime = slotTime
-            )
-            val finalBrief = baseBrief.copy(
-                status = "draft",
-                isApproved = false,
-                imageUrl = generateImageServiceUrl(baseBrief.imagePrompt, 100 + i)
-            )
-            repository.insertBrief(finalBrief)
-        }
-    }
-
-    private fun populateDefaultStatistics() {
-        // Dynamic analytics: metrics are generated in real-time from actual publishes
     }
 
     /**

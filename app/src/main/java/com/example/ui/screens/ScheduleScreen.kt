@@ -376,7 +376,7 @@ fun ScheduleBriefRow(
                             modifier = Modifier.height(36.dp),
                             contentPadding = PaddingValues(horizontal = 12.dp)
                         ) {
-                            Text("Mock Publish", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text("Publish Now", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                     "skipped" -> {

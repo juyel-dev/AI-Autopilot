@@ -219,63 +219,6 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                         color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
-
-                    // Reset/Instant Setup Button
-                    TextButton(
-                        onClick = {
-                            // Seed default active configuration instantly
-                            supabaseUrl = "https://aether-demo-project.supabase.co"
-                            anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IlNlbGYifQ"
-                            serviceRoleKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.service_role"
-                            patKey = "sbp_aether_client_secret"
-                            facebookPageId = "109283748392"
-                            facebookToken = "EAAW_demo_facebook_page_token_access"
-                            aiProvider = "openai_compatible"
-                            aiBaseUrl = "https://api.openai.com/v1"
-                            aiModel = "gpt-4o-mini"
-                            aiApiKey = "sk-demoakey_for_testing"
-                            imageProvider = "pollinations"
-                            imageBaseUrl = "https://image.pollinations.ai"
-                            imageModel = "flux"
-                            imageApiKey = ""
-                            projectName = "Silicon AI Core"
-                            brandTone = "Tech futurist, elegant, high precision"
-                            brandTopics = "Artificial Intelligence, Space Propulsion, Generative Aesthetics"
-                            brandVoice = "Authoritative sci-tech engineer and founder with visual excellence"
-                            audience = "Engineers, builders, tech leaders"
-                            postFrequency = "3"
-                            postingMode = "hybrid"
-                            dailySpendCap = "10.00"
-
-                            // Run immediately to bypass form filling for prototype
-                            viewModel.executeAutoSetup(
-                                projectName = projectName,
-                                supabaseUrl = supabaseUrl,
-                                anonKey = anonKey,
-                                serviceRoleKey = serviceRoleKey,
-                                patKey = patKey,
-                                facebookToken = facebookToken,
-                                facebookPageId = facebookPageId,
-                                aiApiKey = aiApiKey,
-                                aiProvider = aiProvider,
-                                aiBaseUrl = aiBaseUrl,
-                                aiModel = aiModel,
-                                imageProvider = imageProvider,
-                                imageBaseUrl = imageBaseUrl,
-                                imageModel = imageModel,
-                                imageApiKey = imageApiKey,
-                                brandVoice = brandVoice,
-                                brandTone = brandTone,
-                                brandTopics = brandTopics,
-                                audience = audience,
-                                postingMode = postingMode,
-                                maxPostsPerDay = postFrequency.toIntOrNull() ?: 2,
-                                dailySpendCap = dailySpendCap.toDoubleOrNull() ?: 5.0
-                            )
-                        }
-                    ) {
-                        Text("Instant Setup (Demo)", color = Color(0xFF10B981))
-                    }
                 }
 
                 // Step progress indicators dots
