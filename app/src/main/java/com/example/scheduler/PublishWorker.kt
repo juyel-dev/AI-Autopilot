@@ -22,23 +22,27 @@ class PublishWorker(context: Context, params: WorkerParameters) : CoroutineWorke
 
     override suspend fun doWork(): Result {
         val database = AppDatabase.getDatabase(applicationContext)
-        val briefDao = database.contentBriefDao()
-        val settingsDao = database.appSettingsDao()
-        val eventDao = database.systemEventDao()
-        val snapshotDao = database.engagementSnapshotDao()
+        val secureStorage = SecureStorage(applicationContext)
+        val repository = AetherRepository(
+            database.appSettingsDao(),
+            database.contentBriefDao(),
+            database.systemEventDao(),
+            database.costEntryDao(),
+            database.engagementSnapshotDao(),
+            secureStorage
+        )
 
-        val settings = settingsDao.getSettingsDirect() ?: AppSettings()
+        val settings = repository.getSettingsDirect() ?: AppSettings()
         
         // If system hasn't completed setup or is in purely manual mode, stop
         if (!settings.isSetupComplete || settings.postingMode == "manual") {
-            Log.d("PublishWorker", "Setup not complete or manual mode active. Skipping scheduled publisher check.")
             return Result.success()
         }
 
         val now = System.currentTimeMillis()
         try {
             // Get all briefs from the Flow
-            val allBriefs = briefDao.getAllBriefsFlow().first()
+            val allBriefs = repository.allBriefsFlow.first()
             
             // Find briefs that are approved, not yet published/skipped, and past scheduled time
             val pendingPublishList = allBriefs.filter { 
@@ -46,17 +50,14 @@ class PublishWorker(context: Context, params: WorkerParameters) : CoroutineWorke
             }
 
             if (pendingPublishList.isEmpty()) {
-                Log.d("PublishWorker", "No approved briefs scheduled to run at this slot.")
                 return Result.success()
             }
 
             for (brief in pendingPublishList) {
-                eventDao.insertEvent(
-                    SystemEvent(
-                        category = "publish",
-                        severity = "info",
-                        message = "Automatic scheduler processing Brief #${brief.id} ('${brief.topic}')..."
-                    )
+                repository.insertEvent(
+                    category = "publish",
+                    severity = "info",
+                    message = "Automatic scheduler processing Brief #${brief.id} ('${brief.topic}')..."
                 )
 
                 val token = settings.facebookToken.trim()
@@ -94,12 +95,12 @@ class PublishWorker(context: Context, params: WorkerParameters) : CoroutineWorke
                                 systemMessage = "Published to Facebook successfully. Response Code: ${response.code}."
                                 true
                             } else {
-                                systemMessage = "Facebook API rejected request (HTTP ${response.code}): $bodyText"
+                                systemMessage = "Facebook API rejected request (HTTP ${response.code})"
                                 false
                             }
                         }
                     } catch (e: Exception) {
-                        systemMessage = "Network failure during Facebook API dispatch: ${e.localizedMessage}"
+                        systemMessage = "Network failure during Facebook API dispatch"
                         false
                     }
                 } else {
@@ -108,21 +109,19 @@ class PublishWorker(context: Context, params: WorkerParameters) : CoroutineWorke
 
                 if (publishSuccess) {
                     // Update brief status
-                    briefDao.updateBrief(brief.copy(status = "published"))
+                    repository.updateBrief(brief.copy(status = "published"))
 
                     // Log real event
-                    eventDao.insertEvent(
-                        SystemEvent(
-                            category = "publish",
-                            severity = "info",
-                            message = "✅ Post '${brief.topic}' successfully published. $systemMessage"
-                        )
+                    repository.insertEvent(
+                        category = "publish",
+                        severity = "info",
+                        message = "✅ Post '${brief.topic}' successfully published. $systemMessage"
                     )
 
                     // Initialize analytics snapshot for the post
                     val labelFormat = SimpleDateFormat("EEE HH:mm", Locale.getDefault()).format(Date(now))
                     
-                    snapshotDao.insertSnapshot(
+                    repository.insertSnapshot(
                         EngagementSnapshot(
                             label = labelFormat,
                             likes = 0,
@@ -134,23 +133,18 @@ class PublishWorker(context: Context, params: WorkerParameters) : CoroutineWorke
                     )
                 } else {
                     // Log fail
-                    eventDao.insertEvent(
-                        SystemEvent(
-                            category = "publish",
-                            severity = "error",
-                            message = "❌ Automatic scheduler stalled for Content ID #${brief.id}: $systemMessage"
-                        )
+                    repository.insertEvent(
+                        category = "publish",
+                        severity = "error",
+                        message = "❌ Automatic scheduler stalled for Content ID #${brief.id}: $systemMessage"
                     )
                 }
             }
         } catch (e: Exception) {
-            Log.e("PublishWorker", "Exception in background publisher execution", e)
-            eventDao.insertEvent(
-                SystemEvent(
-                    category = "scheduler",
-                    severity = "error",
-                    message = "Background scheduler encountered fatal exception: ${e.localizedMessage}"
-                )
+            repository.insertEvent(
+                category = "scheduler",
+                severity = "error",
+                message = "Background scheduler encountered fatal exception during execution."
             )
         }
 

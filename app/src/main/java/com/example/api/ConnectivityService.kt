@@ -59,8 +59,7 @@ object ConnectivityService {
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Supabase handshake failure", e)
-            TestResult(false, "Handshake failed: ${e.localizedMessage ?: "Unknown I/O Exception"}. Double-check your URL and connections.")
+            TestResult(false, "Handshake failed. Double-check your network connections.")
         }
     }
 
@@ -96,8 +95,7 @@ object ConnectivityService {
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Facebook page request failure", e)
-            TestResult(false, "Connectivity failed: ${e.localizedMessage ?: "Unknown network error."}")
+            TestResult(false, "Connectivity failed due to a network or connection error.")
         }
     }
 
@@ -144,7 +142,7 @@ object ConnectivityService {
                     }
                 }
             } catch (e: Exception) {
-                TestResult(false, "Connection failed: ${e.localizedMessage}")
+                TestResult(false, "Connection failed due to a network or connection error.")
             }
         } else {
             // OpenAI compatible Chat Completion ping
@@ -191,7 +189,7 @@ object ConnectivityService {
                     }
                 }
             } catch (e: Exception) {
-                TestResult(false, "AI Handshake exception: ${e.localizedMessage ?: "Unknown IO Exception"}")
+                TestResult(false, "AI Handshake exception occurred.")
             }
         }
     }
@@ -257,7 +255,7 @@ object ConnectivityService {
                     }
                 }
             } catch (e: Exception) {
-                TestResult(false, "Image engine check failed: ${e.localizedMessage}")
+                TestResult(false, "Image engine check failed due to a network or connection error.")
             }
         }
     }
