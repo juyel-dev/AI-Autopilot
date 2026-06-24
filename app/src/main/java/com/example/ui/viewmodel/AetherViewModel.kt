@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.*
-import com.example.api.GeminiAIService
 import com.example.data.*
 import com.example.scheduler.PublishWorker
 import kotlinx.coroutines.Dispatchers
@@ -316,43 +315,6 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     /**
-     * Triggers dynamic Gemini AI model content generation (or fallback template)
-     * for a particular slot ID.
-     */
-    fun regenerateBrief(briefId: Long) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val settings = repository.getSettingsDirect() ?: AppSettings()
-            val existing = repository.getBriefById(briefId) ?: return@launch
-
-            repository.insertEvent("ai", "info", "Invoking system model strategy for brief #${briefId}...")
-
-            val newBriefContents = GeminiAIService.generateBrief(
-                provider = settings.aiProvider,
-                baseUrl = settings.aiBaseUrl,
-                apiKey = settings.aiApiKey,
-                modelName = settings.aiModel,
-                pageTopic = settings.projectName,
-                brandVoice = settings.brandVoice,
-                audience = settings.audience,
-                slotTime = existing.slotTime,
-                repository = repository
-            )
-
-            // Update database brief
-            val updated = existing.copy(
-                topic = newBriefContents.topic,
-                caption = newBriefContents.caption,
-                hashtags = newBriefContents.hashtags,
-                imagePrompt = newBriefContents.imagePrompt,
-                imageUrl = generateImageServiceUrl(newBriefContents.imagePrompt, Random.nextInt(1, 100000)),
-                predictedScore = newBriefContents.predictedScore
-            )
-            repository.updateBrief(updated)
-            repository.insertEvent("ai", "info", "Brief #${briefId} successfully redesigned and updated in schedule.")
-        }
-    }
-
-    /**
      * Approves a brief to transition it to the scheduled pipeline.
      */
     fun approveBrief(briefId: Long) {
@@ -368,31 +330,27 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     /**
-     * Skips or declines a scheduled brief.
+     * Deletes a brief from the scheduled pipeline.
      */
-    fun skipBrief(briefId: Long) {
+    fun deleteBrief(briefId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             val existing = repository.getBriefById(briefId) ?: return@launch
-            val updated = existing.copy(
-                status = "skipped"
-            )
-            repository.updateBrief(updated)
-            repository.insertEvent("scheduler", "warn", "Skipped calendar slot for Topic: '${existing.topic}'.")
+            repository.deleteBriefById(briefId)
+            repository.insertEvent("scheduler", "warn", "Deleted calendar slot for Topic: '${existing.topic}'.")
         }
     }
 
     /**
      * Edits a content brief with manual adjustments.
      */
-    fun updateBriefManually(id: Long, topic: String, caption: String, hashtags: String, imagePrompt: String) {
+    fun updateBriefManually(id: Long, topic: String, caption: String, hashtags: String, imageUrl: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val existing = repository.getBriefById(id) ?: return@launch
             val updated = existing.copy(
                 topic = topic,
                 caption = caption,
                 hashtags = hashtags,
-                imagePrompt = imagePrompt,
-                imageUrl = generateImageServiceUrl(imagePrompt, Random.nextInt(1, 10000))
+                imageUrl = imageUrl.ifBlank { existing.imageUrl }
             )
             repository.updateBrief(updated)
             repository.insertEvent("scheduler", "info", "Updated brief: '${topic}' manually.")
@@ -459,17 +417,16 @@ class AetherViewModel(application: Application) : AndroidViewModel(application) 
     /**
      * Manually generates a new brief row in the scheduler.
      */
-    fun insertNewManualBrief(topic: String, caption: String, hashtags: String) {
+    fun insertNewManualBrief(topic: String, caption: String, hashtags: String, imageUrl: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val defaultImgPrompt = "A futuristic glowing crystal showing design aesthetics"
             val now = System.currentTimeMillis()
             val brief = ContentBrief(
                 slotTime = now + (24 * 60 * 60 * 1000L), // Next day
                 topic = topic,
                 caption = caption,
                 hashtags = hashtags,
-                imagePrompt = defaultImgPrompt,
-                imageUrl = generateImageServiceUrl(defaultImgPrompt, Random.nextInt(1, 10000)),
+                imagePrompt = "",
+                imageUrl = imageUrl,
                 status = "draft"
             )
             repository.insertBrief(brief)

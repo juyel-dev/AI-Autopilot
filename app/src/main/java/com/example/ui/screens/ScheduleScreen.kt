@@ -41,6 +41,8 @@ fun ScheduleScreen(viewModel: AetherViewModel) {
     var newCaption by remember { mutableStateOf("") }
     var newHashtags by remember { mutableStateOf("") }
 
+    val settings by viewModel.appSettings.collectAsState()
+
     LiquidBackground {
         Column(
             modifier = Modifier
@@ -70,23 +72,50 @@ fun ScheduleScreen(viewModel: AetherViewModel) {
                     )
                 }
                 
-                Button(
-                    onClick = {
-                        newTopic = ""
-                        newCaption = ""
-                        newHashtags = ""
-                        showAddDialog = true
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6)),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Brief")
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Add Slot", fontSize = 12.sp)
+                if (!settings?.supabaseUrl.isNullOrEmpty()) {
+                    Button(
+                        onClick = {
+                            newTopic = ""
+                            newCaption = ""
+                            newHashtags = ""
+                            showAddDialog = true
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6)),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Add Brief")
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Add Slot", fontSize = 12.sp)
+                    }
                 }
             }
 
-            if (briefs.isEmpty()) {
+            if (settings?.supabaseUrl.isNullOrEmpty()) {
+                AetherGlassCard(modifier = Modifier.fillMaxWidth().padding(top = 24.dp)) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Default.Warning, contentDescription = "Warning", tint = Color(0xFFF59E0B), modifier = Modifier.size(48.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Supabase Connection Required",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Please run the setup wizard and configure your Supabase URL to activate the scheduling pipeline.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.6f),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            } else if (briefs.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -113,9 +142,8 @@ fun ScheduleScreen(viewModel: AetherViewModel) {
                         ScheduleBriefRow(
                             brief = brief,
                             onEdit = { briefToEdit = brief },
-                            onRegenerate = { viewModel.regenerateBrief(brief.id) },
                             onApprove = { viewModel.approveBrief(brief.id) },
-                            onSkip = { viewModel.skipBrief(brief.id) },
+                            onDelete = { viewModel.deleteBrief(brief.id) },
                             onPublish = { viewModel.publishBriefImmediate(brief.id) }
                         )
                     }
@@ -125,6 +153,15 @@ fun ScheduleScreen(viewModel: AetherViewModel) {
 
         // Add custom slot dialog
         if (showAddDialog) {
+            var newImageUrl by remember { mutableStateOf("") }
+            val photoPickerLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+                androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia()
+            ) { uri ->
+                if (uri != null) {
+                    newImageUrl = uri.toString()
+                }
+            }
+
             AlertDialog(
                 onDismissRequest = { showAddDialog = false },
                 containerColor = Color(0xFF0F1223),
@@ -150,13 +187,26 @@ fun ScheduleScreen(viewModel: AetherViewModel) {
                             label = "Hashtags List (comma separated)",
                             placeholder = "tech,design,aesthetics"
                         )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Media", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedButton(
+                            onClick = { 
+                                photoPickerLauncher.launch(
+                                    androidx.activity.result.PickVisualMediaRequest(androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                ) 
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(if (newImageUrl.isNotEmpty()) "Image Selected" else "Select Image from Gallery")
+                        }
                     }
                 },
                 confirmButton = {
                     Button(
                         onClick = {
                             if (newTopic.isNotEmpty()) {
-                                viewModel.insertNewManualBrief(newTopic, newCaption, newHashtags)
+                                viewModel.insertNewManualBrief(newTopic, newCaption, newHashtags, newImageUrl)
                                 showAddDialog = false
                             }
                         },
@@ -173,7 +223,15 @@ fun ScheduleScreen(viewModel: AetherViewModel) {
             var editTopic by remember { mutableStateOf(brief.topic) }
             var editCaption by remember { mutableStateOf(brief.caption) }
             var editHashtags by remember { mutableStateOf(brief.hashtags) }
-            var editImagePrompt by remember { mutableStateOf(brief.imagePrompt) }
+            var editImageUrl by remember { mutableStateOf(brief.imageUrl) }
+            
+            val photoPickerLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+                androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia()
+            ) { uri ->
+                if (uri != null) {
+                    editImageUrl = uri.toString()
+                }
+            }
 
             AlertDialog(
                 onDismissRequest = { briefToEdit = null },
@@ -200,12 +258,19 @@ fun ScheduleScreen(viewModel: AetherViewModel) {
                             label = "Hashtags (comma separated)",
                             placeholder = "hashtags"
                         )
-                        WizardTextField(
-                            value = editImagePrompt,
-                            onValueChange = { editImagePrompt = it },
-                            label = "AI Image Generation Prompt Guide",
-                            placeholder = "Describe illustration details..."
-                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Media", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedButton(
+                            onClick = { 
+                                photoPickerLauncher.launch(
+                                    androidx.activity.result.PickVisualMediaRequest(androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                ) 
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(if (editImageUrl.isNotEmpty() && editImageUrl != brief.imageUrl) "New Image Selected" else "Change Image")
+                        }
                     }
                 },
                 confirmButton = {
@@ -216,13 +281,13 @@ fun ScheduleScreen(viewModel: AetherViewModel) {
                                 topic = editTopic,
                                 caption = editCaption,
                                 hashtags = editHashtags,
-                                imagePrompt = editImagePrompt
+                                imageUrl = editImageUrl
                             )
                             briefToEdit = null
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))
                     ) {
-                        Text("Save & Render")
+                        Text("Save Update")
                     }
                 }
             )
@@ -234,9 +299,8 @@ fun ScheduleScreen(viewModel: AetherViewModel) {
 fun ScheduleBriefRow(
     brief: ContentBrief,
     onEdit: () -> Unit,
-    onRegenerate: () -> Unit,
     onApprove: () -> Unit,
-    onSkip: () -> Unit,
+    onDelete: () -> Unit,
     onPublish: () -> Unit
 ) {
     val formatter = SimpleDateFormat("EEE hh:mm a (MMM dd)", Locale.getDefault())
@@ -355,16 +419,6 @@ fun ScheduleBriefRow(
                     Icon(Icons.Default.Edit, contentDescription = "Edit Block", tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(16.dp))
                 }
 
-                IconButton(
-                    onClick = onRegenerate,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0x12FFFFFF))
-                ) {
-                    Icon(Icons.Default.AutoAwesome, contentDescription = "AI Regenerate", tint = Color(0xFF3B82F6), modifier = Modifier.size(16.dp))
-                }
-
                 Spacer(modifier = Modifier.weight(1f))
 
                 when (brief.status) {
@@ -392,14 +446,14 @@ fun ScheduleBriefRow(
                     }
                     else -> {
                         OutlinedButton(
-                            onClick = onSkip,
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White.copy(alpha = 0.6f)),
+                            onClick = onDelete,
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444)),
                             shape = RoundedCornerShape(8.dp),
-                            border = BorderStroke(1.dp, Color(0x33FFFFFF)),
+                            border = BorderStroke(1.dp, Color(0x33EF4444)),
                             modifier = Modifier.height(36.dp),
                             contentPadding = PaddingValues(horizontal = 12.dp)
                         ) {
-                            Text("Skip", fontSize = 11.sp)
+                            Text("Delete", fontSize = 11.sp)
                         }
 
                         Button(

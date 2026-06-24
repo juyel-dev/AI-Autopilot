@@ -71,21 +71,22 @@ fun DashboardScreen(viewModel: AetherViewModel) {
             ) {
                 Column {
                     Text(
-                        text = settings?.projectName ?: "Aether Engine",
+                        text = settings?.projectName?.ifEmpty { "Aether Engine" } ?: "Aether Engine",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        val isConnected = !settings?.supabaseUrl.isNullOrEmpty()
                         Box(
                             modifier = Modifier
                                 .size(8.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF10B981))
+                                .background(if (isConnected) Color(0xFF10B981) else Color(0xFFF59E0B))
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Backplane active",
+                            text = if (isConnected) "Backplane active" else "Setup required",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.5f)
                         )
@@ -102,6 +103,42 @@ fun DashboardScreen(viewModel: AetherViewModel) {
                     Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White)
                 }
             }
+
+            if (settings?.supabaseUrl.isNullOrEmpty()) {
+                AetherGlassCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Default.Warning, contentDescription = "Warning", tint = Color(0xFFF59E0B), modifier = Modifier.size(48.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Data Connection Required",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Aether requires a valid Supabase connection to store and retrieve production data. Run the setup wizard to connect your backend.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.7f),
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { viewModel.navigateTo(Screen.SETUP_WIZARD) },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))
+                        ) {
+                            Text("Run Setup Wizard")
+                        }
+                    }
+                }
+            } else {
 
             // Segmentation Control for Posting Mode
             Text(
@@ -270,6 +307,8 @@ fun DashboardScreen(viewModel: AetherViewModel) {
                     }
                 }
             }
+            } // end of else block
+
         }
 
         // Action Dialog showing post details and edit options
@@ -339,24 +378,11 @@ fun DashboardScreen(viewModel: AetherViewModel) {
                                 selectedBriefForDialog = null
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC4899)),
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             Icon(Icons.Default.Send, contentDescription = "Publish", modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text("Post Now", fontSize = 12.sp)
-                        }
-                        
-                        Button(
-                            onClick = {
-                                viewModel.regenerateBrief(brief.id)
-                                selectedBriefForDialog = null
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6)),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(Icons.Default.AutoAwesome, contentDescription = "AI", modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Regen", fontSize = 12.sp)
                         }
                     }
                 }

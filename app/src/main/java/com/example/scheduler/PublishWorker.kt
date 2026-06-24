@@ -61,12 +61,11 @@ class PublishWorker(context: Context, params: WorkerParameters) : CoroutineWorke
 
                 val token = settings.facebookToken.trim()
                 val pageId = settings.facebookPageId.trim()
-                val isRealFacebook = token.isNotEmpty() && pageId.isNotEmpty() && !token.startsWith("EAAW_demo")
 
-                var publishSuccess = true
+                var publishSuccess = false
                 var systemMessage = ""
 
-                if (isRealFacebook) {
+                if (token.isNotEmpty() && pageId.isNotEmpty()) {
                     // Make real API Call
                     publishSuccess = try {
                         val requestUrl = if (brief.imageUrl.isNotEmpty()) {
@@ -104,8 +103,7 @@ class PublishWorker(context: Context, params: WorkerParameters) : CoroutineWorke
                         false
                     }
                 } else {
-                    // Seamless offline/local simulator for sandboxed developer
-                    systemMessage = "Auto-Handshake complete. Posted content and image vector online (Sandboxed Local Host)."
+                    systemMessage = "Facebook token or page ID is missing. Cannot publish."
                 }
 
                 if (publishSuccess) {
@@ -121,18 +119,16 @@ class PublishWorker(context: Context, params: WorkerParameters) : CoroutineWorke
                         )
                     )
 
-                    // Track Analytics snapshot dynamically from actual post publish!
-                    val reachCount = Random.nextInt(200, 800)
-                    val likesCount = Random.nextInt(15, 60)
+                    // Initialize analytics snapshot for the post
                     val labelFormat = SimpleDateFormat("EEE HH:mm", Locale.getDefault()).format(Date(now))
                     
                     snapshotDao.insertSnapshot(
                         EngagementSnapshot(
                             label = labelFormat,
-                            likes = likesCount,
-                            comments = likesCount / 4,
-                            shares = likesCount / 10,
-                            reach = reachCount,
+                            likes = 0,
+                            comments = 0,
+                            shares = 0,
+                            reach = 0,
                             timestamp = now
                         )
                     )

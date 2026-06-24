@@ -63,6 +63,37 @@ fun AnalyticsScreen(viewModel: AetherViewModel) {
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
+            if (settings?.supabaseUrl.isNullOrEmpty()) {
+                AetherGlassCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Default.Warning, contentDescription = "Warning", tint = Color(0xFFF59E0B), modifier = Modifier.size(48.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Analytics Unavailable",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Connect your Supabase instance through the setup wizard to securely track and store your content performance analytics.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.6f),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            } else {
+
             // Segment 1: Reach & Likes Graph
             Text(
                 text = "DAILY POST REACH TREND",
@@ -254,6 +285,8 @@ fun AnalyticsScreen(viewModel: AetherViewModel) {
                     }
                 }
             }
+            } // end of else block
+
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
