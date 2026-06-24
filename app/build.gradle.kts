@@ -121,3 +121,16 @@ dependencies {
   "ksp"(libs.androidx.room.compiler)
   "ksp"(libs.moshi.kotlin.codegen)
 }
+
+tasks.register<Copy>("copyApkToRoot") {
+    from(layout.buildDirectory.file("outputs/apk/debug/app-debug.apk"))
+    into(rootProject.file("apk"))
+    rename { "AetherEngine-debug.apk" }
+}
+
+afterEvaluate {
+    tasks.named("assembleDebug") {
+        finalizedBy("copyApkToRoot")
+    }
+}
+
