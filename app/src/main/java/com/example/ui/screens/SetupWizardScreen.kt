@@ -7,6 +7,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -52,6 +53,11 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
     var anonKey by remember { mutableStateOf("") }
     var serviceRoleKey by remember { mutableStateOf("") }
     var patKey by remember { mutableStateOf("") }
+    var projectRef by remember { mutableStateOf("") }
+    var dbEnableMigrations by remember { mutableStateOf(true) }
+    var dbSchemaSetup by remember { mutableStateOf(true) }
+    var storageBucketName by remember { mutableStateOf("generated-images") }
+    var storageIsPublic by remember { mutableStateOf(true) }
 
     // Inputs Step 2: Facebook
     var facebookPageId by remember { mutableStateOf("") }
@@ -314,6 +320,70 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                     errorMessage = if (patKey.isNotEmpty() && patKey.length < 10) "Token is too short" else null
                                 )
 
+                                WizardTextField(
+                                    value = projectRef,
+                                    onValueChange = { projectRef = it },
+                                    label = "Project Reference ID",
+                                    placeholder = "abcdefghijklmno",
+                                    errorMessage = null
+                                )
+
+                                Text(
+                                    text = "Database Setup",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                                )
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                                ) {
+                                    Checkbox(
+                                        checked = dbEnableMigrations,
+                                        onCheckedChange = { dbEnableMigrations = it }
+                                    )
+                                    Text("Enable migrations", style = MaterialTheme.typography.bodyMedium)
+                                }
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                                ) {
+                                    Checkbox(
+                                        checked = dbSchemaSetup,
+                                        onCheckedChange = { dbSchemaSetup = it }
+                                    )
+                                    Text("Run schema setup", style = MaterialTheme.typography.bodyMedium)
+                                }
+
+                                Text(
+                                    text = "Storage Provisioning",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(bottom = 8.dp)
+                                )
+
+                                WizardTextField(
+                                    value = storageBucketName,
+                                    onValueChange = { storageBucketName = it },
+                                    label = "Bucket Name",
+                                    placeholder = "media"
+                                )
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                                ) {
+                                    Checkbox(
+                                        checked = storageIsPublic,
+                                        onCheckedChange = { storageIsPublic = it }
+                                    )
+                                    Text("Make bucket public", style = MaterialTheme.typography.bodyMedium)
+                                }
+
                                 Spacer(modifier = Modifier.height(16.dp))
 
                                  // Show Active test diagnostics feedback
@@ -364,7 +434,12 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                                     supabaseUrl = supabaseUrl,
                                                     anonKey = anonKey,
                                                     serviceRoleKey = serviceRoleKey,
-                                                    patKey = patKey
+                                                    patKey = patKey,
+                                                    projectRef = projectRef,
+                                                    dbEnableMigrations = dbEnableMigrations,
+                                                    dbSchemaSetup = dbSchemaSetup,
+                                                    storageBucketName = storageBucketName,
+                                                    storageIsPublic = storageIsPublic
                                                 )
                                             }
                                             currentStep = 2
@@ -498,24 +573,23 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
 
                                 // Custom selectable registry chips
                                 Text("Provider Compatible Mode", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
-                                Row(
+                                androidx.compose.foundation.lazy.LazyRow(
                                     modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    listOf("gemini" to "Google Gemini", "openai_compatible" to "OpenAI / Custom").forEach { (prov, label) ->
+                                    items(listOf("Gemini", "OpenAI", "Claude", "Groq", "Custom API")) { prov ->
                                         val isSel = aiProvider == prov
                                         Box(
                                             modifier = Modifier
-                                                .weight(1f)
                                                 .clip(RoundedCornerShape(8.dp))
                                                 .background(if (isSel) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
                                                 .border(1.dp, if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
-                                                .padding(12.dp)
-                                                .clip(RoundedCornerShape(8.dp)),
+                                                .clickable { aiProvider = prov }
+                                                .padding(12.dp),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Text(
-                                                text = label,
+                                                text = prov,
                                                 color = if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                                                 style = MaterialTheme.typography.labelMedium,
                                                 fontWeight = FontWeight.Bold
@@ -883,6 +957,11 @@ fun SetupWizardScreen(viewModel: AetherViewModel) {
                                             anonKey = anonKey,
                                             serviceRoleKey = serviceRoleKey,
                                             patKey = patKey,
+                                            projectRef = projectRef,
+                                            dbEnableMigrations = dbEnableMigrations,
+                                            dbSchemaSetup = dbSchemaSetup,
+                                            storageBucketName = storageBucketName,
+                                            storageIsPublic = storageIsPublic,
                                             facebookToken = facebookToken,
                                             facebookPageId = facebookPageId,
                                             aiApiKey = aiApiKey,
